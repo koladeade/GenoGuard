@@ -1,42 +1,36 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'core/api.dart';
+import 'core/auth_state.dart';
+import 'core/token_store.dart';
+import 'router.dart';
 
-void main() => runApp(const MyApp());
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  @override
-  Widget build(BuildContext context) => const MaterialApp(home: HealthScreen());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  final auth = AuthState(Api(TokenStore()))..boot();
+  runApp(
+    ChangeNotifierProvider.value(value: auth, child: const GenoGuardApp()),
+  );
 }
 
-class HealthScreen extends StatefulWidget {
-  const HealthScreen({super.key});
+class GenoGuardApp extends StatefulWidget {
+  const GenoGuardApp({super.key});
   @override
-  State<HealthScreen> createState() => _HealthScreenState();
+  State<GenoGuardApp> createState() => _GenoGuardAppState();
 }
 
-class _HealthScreenState extends State<HealthScreen> {
-  String status = 'Checking...';
+class _GenoGuardAppState extends State<GenoGuardApp> {
+  late final GoRouter _router = buildRouter(context.read<AuthState>());
 
   @override
-  void initState() {
-    super.initState();
-    check();
-  }
-
-  Future<void> check() async {
-    try {
-      final r = await http.get(Uri.parse('http://localhost:3000/health'));
-      final ok = jsonDecode(r.body)['status'] == 'ok';
-      setState(() => status = ok ? 'API OK' : 'API error');
-    } catch (e) {
-      setState(() => status = 'Cannot reach API');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Center(child: Text(status, style: const TextStyle(fontSize: 24))),
+  Widget build(BuildContext context) => MaterialApp.router(
+    title: 'GenoGuard',
+    routerConfig: _router,
+    theme: ThemeData(
+      colorSchemeSeed: const Color(0xFFB3261E),
+      useMaterial3: true,
+      brightness: Brightness.light,
+    ),
   );
 }
