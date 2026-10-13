@@ -1,12 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'api.dart';
+import 'google_auth.dart';
 
 const kConsentVersion = '1.0';
 
 enum AuthStatus { unknown, unauthed, authed }
 
 String errMsg(Object e) {
+  if (e is GoogleNotConfigured) return 'Google sign-in is not set up yet.';
+  if (e is PlatformException) return 'Google sign-in failed. Try again.';
   if (e is DioException) {
     final d = e.response?.data;
     if (d is Map && d['error'] != null) return d['error'].toString();
@@ -27,8 +31,13 @@ class AuthState extends ChangeNotifier {
   final Api api;
   AuthStatus status = AuthStatus.unknown;
   Map<String, dynamic>? user;
-  bool consentAccepted =
-      false; // in-memory; the server stores the consent record at sign-up
+
+  // Held in memory between the consent screen and account creation.
+  bool consentAccepted = false;
+  bool usageLogsConsent = false;
+
+  /// Set when a Google account has no GenoGuard account yet: {id_token, email, name}.
+  Map<String, dynamic>? pendingGoogle;
 
   String? get role => user?['role'] as String?;
 
@@ -43,8 +52,9 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void acceptConsent() {
+  void acceptConsent({required bool usageLogs}) {
     consentAccepted = true;
+    usageLogsConsent = usageLogs;
     notifyListeners();
   }
 
@@ -58,11 +68,13 @@ class AuthState extends ChangeNotifier {
   Future<void> _adopt(Response r) async {
     await api.tokens.save(r.data['access_token'], r.data['refresh_token']);
     user = Map<String, dynamic>.from(r.data['user']);
+    pendingGoogle = null;
     status = AuthStatus.authed;
     notifyListeners();
   }
 
   Future<void> register({
+    required String fullName,
     required String email,
     required String password,
     required bool hasScd,
@@ -72,6 +84,7 @@ class AuthState extends ChangeNotifier {
     final r = await api.dio.post(
       '/auth/register',
       data: {
+        'full_name': fullName,
         'email': email,
         'password': password,
         'has_scd': hasScd,
@@ -79,6 +92,7 @@ class AuthState extends ChangeNotifier {
         'location': location,
         'consent': true,
         'consent_version': kConsentVersion,
+        'usage_logs': usageLogsConsent,
       }..removeWhere((k, v) => v == null),
     );
     await _adopt(r);
@@ -91,6 +105,53 @@ class AuthState extends ChangeNotifier {
         data: {'email': email, 'password': password},
       ),
     );
+  }
+
+  /// Opens Google, then asks the API. Returns true if this Google account is new and the app
+  /// must collect consent and the SCD answer before the account can be created.
+  Future<bool> signInWithGoogle() async {
+    final idToken = await GoogleAuth.idToken();
+    if (idToken == null) return false; // cancelled
+    final r = await api.dio.post('/auth/google', data: {'id_token': idToken});
+    if (r.data['status'] == 'needs_profile') {
+      pendingGoogle = {
+        'id_token': idToken,
+        'email': r.data['email'],
+        'name': r.data['name'],
+      };
+      notifyListeners();
+      return true;
+    }
+    await _adopt(r);
+    return false;
+  }
+
+  Future<void> completeGoogleSignup({
+    required String fullName,
+    required bool hasScd,
+    String? genotype,
+    String? location,
+  }) async {
+    final p = pendingGoogle!;
+    final r = await api.dio.post(
+      '/auth/google',
+      data: {
+        'id_token': p['id_token'],
+        'full_name': fullName,
+        'has_scd': hasScd,
+        'genotype': genotype,
+        'location': location,
+        'consent': true,
+        'consent_version': kConsentVersion,
+        'usage_logs': usageLogsConsent,
+      }..removeWhere((k, v) => v == null),
+    );
+    await _adopt(r);
+  }
+
+  void cancelGoogle() {
+    pendingGoogle = null;
+    notifyListeners();
   }
 
   Future<void> logout() async {
@@ -112,26 +173,37 @@ class AuthState extends ChangeNotifier {
       );
 
   Future<void> updateProfile({
+    required String fullName,
     required bool hasScd,
     String? genotype,
     String? location,
   }) async {
     final r = await api.dio.patch(
       '/me',
-      data: {'has_scd': hasScd, 'genotype': genotype, 'location': location},
+      data: {
+        'full_name': fullName,
+        'has_scd': hasScd,
+        'genotype': genotype,
+        'location': location,
+      },
     );
     user = Map<String, dynamic>.from(r.data['user']);
     notifyListeners(); // role may have changed; the router re-evaluates
   }
 
-  Future<void> deleteAccount(String password) async {
-    await api.dio.delete('/me', data: {'password': password});
+  /// Password accounts pass their password; Google-only accounts pass null.
+  Future<void> deleteAccount(String? password) async {
+    await api.dio.delete(
+      '/me',
+      data: password != null ? {'password': password} : {'confirm': true},
+    );
     _expired();
   }
 
   void _expired() {
     api.tokens.clear();
     user = null;
+    pendingGoogle = null;
     status = AuthStatus.unauthed;
     notifyListeners();
   }

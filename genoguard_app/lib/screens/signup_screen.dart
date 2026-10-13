@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
+import '../theme/app_theme.dart';
+import '../widgets/common.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -11,35 +12,75 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _form = GlobalKey<FormState>();
+  final _name = TextEditingController();
   final _email = TextEditingController();
   final _pw = TextEditingController();
   final _loc = TextEditingController();
   bool? _hasScd;
   String? _geno;
   bool _busy = false;
+  bool _googleBusy = false;
   String? _err;
 
-  List<String> get _options =>
+  @override
+  void initState() {
+    super.initState();
+    // Arriving from "Continue with Google" on the login screen: prefill the name from Google.
+    final g = context.read<AuthState>().pendingGoogle;
+    if (g != null) _name.text = (g['name'] as String?) ?? '';
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _pw.dispose();
+    _loc.dispose();
+    super.dispose();
+  }
+
+  List<String> get _genoOptions =>
       _hasScd == true ? ['SS', 'SC'] : ['AA', 'AS', 'AC', 'CC'];
+
+  bool _valid(bool google) {
+    if (_name.text.trim().isEmpty) return false;
+    if (!google) {
+      if (!_email.text.contains('@') || !_email.text.contains('.'))
+        return false;
+      if (_pw.text.length < 8) return false;
+    }
+    if (_hasScd == null) return false;
+    if (_hasScd! && _geno == null) return false;
+    return true;
+  }
+
+  String? _loc0() => _loc.text.trim().isEmpty ? null : _loc.text.trim();
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
-    if (_hasScd == null) {
-      setState(() => _err = 'Please answer the sickle cell question');
-      return;
-    }
+    final auth = context.read<AuthState>();
     setState(() {
       _busy = true;
       _err = null;
     });
     try {
-      await context.read<AuthState>().register(
-        email: _email.text.trim().toLowerCase(),
-        password: _pw.text,
-        hasScd: _hasScd!,
-        genotype: _geno,
-        location: _loc.text.trim().isEmpty ? null : _loc.text.trim(),
-      );
+      if (auth.pendingGoogle != null) {
+        await auth.completeGoogleSignup(
+          fullName: _name.text.trim(),
+          hasScd: _hasScd!,
+          genotype: _geno,
+          location: _loc0(),
+        );
+      } else {
+        await auth.register(
+          fullName: _name.text.trim(),
+          email: _email.text.trim().toLowerCase(),
+          password: _pw.text,
+          hasScd: _hasScd!,
+          genotype: _geno,
+          location: _loc0(),
+        );
+      }
     } catch (e) {
       if (mounted) setState(() => _err = errMsg(e));
     } finally {
@@ -47,104 +88,180 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  Future<void> _google() async {
+    final auth = context.read<AuthState>();
+    setState(() {
+      _googleBusy = true;
+      _err = null;
+    });
+    try {
+      final needsProfile = await auth.signInWithGoogle();
+      if (needsProfile && mounted) {
+        setState(() {
+          if (_name.text.trim().isEmpty)
+            _name.text = (auth.pendingGoogle?['name'] as String?) ?? '';
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _err = errMsg(e));
+    } finally {
+      if (mounted) setState(() => _googleBusy = false);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Create account')),
-    body: SafeArea(
-      child: Form(
-        key: _form,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            TextFormField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Email'),
-              validator: (v) =>
-                  (v != null && v.contains('@') && v.contains('.'))
-                  ? null
-                  : 'Enter a valid email',
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _pw,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password (8+ characters)',
-              ),
-              validator: (v) =>
-                  (v ?? '').length >= 8 ? null : 'At least 8 characters',
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _loc,
-              decoration: const InputDecoration(
-                labelText: 'Location (city or state, optional)',
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Do you live with sickle cell disease (SS or SC)?',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            SegmentedButton<bool>(
-              emptySelectionAllowed: true,
-              segments: const [
-                ButtonSegment(value: true, label: Text('Yes')),
-                ButtonSegment(value: false, label: Text('No')),
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthState>();
+    final googleEmail = auth.pendingGoogle?['email'] as String?;
+    final google = googleEmail != null;
+
+    return AuthScaffold(
+      title: 'Create your account',
+      backTo: '/welcome',
+      children: [
+        Form(
+          key: _form,
+          onChanged: () => setState(() {}),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (google) ...[
+                AppCard(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: AppColors.green),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Google account: $googleEmail',
+                          style: AppText.body(15, FontWeight.w600),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            context.read<AuthState>().cancelGoogle(),
+                        child: Text(
+                          'Change',
+                          style: AppText.body(
+                            15,
+                            FontWeight.w700,
+                            AppColors.gold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
               ],
-              selected: _hasScd == null ? <bool>{} : {_hasScd!},
-              onSelectionChanged: (s) => setState(() {
-                _hasScd = s.isEmpty ? null : s.first;
-                _geno = null;
-              }),
-            ),
-            if (_hasScd == true)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'The patient side is for people with SS or SC. Everyone else gets the Explore side.',
-                ),
-              ),
-            if (_hasScd != null) ...[
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _geno,
-                decoration: InputDecoration(
-                  labelText: _hasScd!
-                      ? 'Your genotype'
-                      : 'Your genotype (optional)',
-                ),
-                items: [
-                  for (final g in _options)
-                    DropdownMenuItem(value: g, child: Text(g)),
-                ],
-                onChanged: (v) => setState(() => _geno = v),
+              AppTextField(
+                label: 'Full name',
+                controller: _name,
+                autofillHints: const [AutofillHints.name],
+                textInputAction: TextInputAction.next,
                 validator: (v) =>
-                    (_hasScd == true && v == null) ? 'Choose SS or SC' : null,
+                    (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
               ),
-            ],
-            if (_err != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  _err!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+              if (!google) ...[
+                const SizedBox(height: 16),
+                AppTextField(
+                  label: 'Email',
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  textInputAction: TextInputAction.next,
+                  validator: (v) =>
+                      (v != null && v.contains('@') && v.contains('.'))
+                      ? null
+                      : 'Enter a valid email',
                 ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  label: 'Password',
+                  controller: _pw,
+                  password: true,
+                  helper: 'At least 8 characters',
+                  autofillHints: const [AutofillHints.newPassword],
+                  textInputAction: TextInputAction.next,
+                  validator: (v) =>
+                      (v ?? '').length >= 8 ? null : 'At least 8 characters',
+                ),
+              ],
+              const SizedBox(height: 16),
+              AppTextField(
+                label: 'City or area',
+                controller: _loc,
+                hint: 'e.g. Lagos',
+                helper: 'Used only for weather tips. You can change it later.',
+                textInputAction: TextInputAction.done,
               ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: _busy ? null : _submit,
-              child: Text(_busy ? 'Creating...' : 'Create account'),
-            ),
-            TextButton(
-              onPressed: () => context.go('/login'),
-              child: const Text('I already have an account'),
-            ),
-          ],
+              const SizedBox(height: 22),
+              Text(
+                'DO YOU LIVE WITH SICKLE CELL DISEASE (SS OR SC)?',
+                style: AppText.body(
+                  14,
+                  FontWeight.w700,
+                  AppColors.muted,
+                ).copyWith(letterSpacing: 1.1),
+              ),
+              const SizedBox(height: 10),
+              YesNoToggle(
+                value: _hasScd,
+                onChanged: (v) => setState(() {
+                  _hasScd = v;
+                  if (!_genoOptions.contains(_geno)) _geno = null;
+                }),
+              ),
+              if (_hasScd == true)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(
+                    'The patient side is for people with SS or SC. Everyone else gets the Explore side.',
+                    style: AppText.body(15, FontWeight.w500, AppColors.muted),
+                  ),
+                ),
+              if (_hasScd != null) ...[
+                const SizedBox(height: 16),
+                FieldLabel(
+                  _hasScd! ? 'Your genotype' : 'Your genotype (optional)',
+                ),
+                DropdownButtonFormField<String>(
+                  value: _geno,
+                  dropdownColor: AppColors.surface,
+                  style: AppText.body(16),
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: AppColors.muted,
+                  ),
+                  decoration: const InputDecoration(hintText: 'Choose'),
+                  items: [
+                    for (final g in _genoOptions)
+                      DropdownMenuItem(value: g, child: Text(g)),
+                  ],
+                  onChanged: (v) => setState(() => _geno = v),
+                  validator: (v) =>
+                      (_hasScd == true && v == null) ? 'Choose SS or SC' : null,
+                ),
+              ],
+            ],
+          ),
         ),
-      ),
-    ),
-  );
+        ErrorText(_err),
+        const SizedBox(height: 20),
+        PrimaryButton(
+          google ? 'Finish sign-up' : 'Create account',
+          busy: _busy,
+          onPressed: _valid(google) ? _submit : null,
+        ),
+        if (!google) ...[
+          const OrDivider(),
+          GoogleButton(
+            label: 'Sign up with Google',
+            onPressed: _google,
+            busy: _googleBusy,
+          ),
+        ],
+      ],
+    );
+  }
 }

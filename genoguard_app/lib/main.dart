@@ -5,6 +5,7 @@ import 'core/api.dart';
 import 'core/auth_state.dart';
 import 'core/token_store.dart';
 import 'router.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,11 +27,8 @@ class _GenoGuardAppState extends State<GenoGuardApp> {
   @override
   Widget build(BuildContext context) => MaterialApp.router(
     title: 'GenoGuard',
+    debugShowCheckedModeBanner: false,
     routerConfig: _router,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xFFB3261E),
-      useMaterial3: true,
-      brightness: Brightness.light,
-    ),
+    theme: buildTheme(),
   );
 }

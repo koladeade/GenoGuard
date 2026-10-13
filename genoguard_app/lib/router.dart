@@ -7,8 +7,10 @@ import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/reset_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/welcome_screen.dart';
+import 'theme/app_theme.dart';
 
-const _publicRoutes = {'/login', '/consent', '/signup', '/reset'};
+const _publicRoutes = {'/welcome', '/login', '/consent', '/signup', '/reset'};
 
 String homeFor(String? role) => switch (role) {
   'admin' => '/admin',
@@ -27,7 +29,7 @@ GoRouter buildRouter(AuthState auth) => GoRouter(
       return loc == '/splash' ? null : '/splash';
 
     if (auth.status == AuthStatus.unauthed) {
-      if (!_publicRoutes.contains(loc)) return '/login';
+      if (!_publicRoutes.contains(loc)) return '/welcome';
       if (loc == '/signup' && !auth.consentAccepted) return '/consent';
       return null;
     }
@@ -42,9 +44,11 @@ GoRouter buildRouter(AuthState auth) => GoRouter(
   routes: [
     GoRoute(
       path: '/splash',
-      builder: (_, __) =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      builder: (_, __) => const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+      ),
     ),
+    GoRoute(path: '/welcome', builder: (_, __) => const WelcomeScreen()),
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/consent', builder: (_, __) => const ConsentScreen()),
     GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
@@ -59,7 +63,7 @@ GoRouter buildRouter(AuthState auth) => GoRouter(
     ),
     GoRoute(
       path: '/admin',
-      builder: (_, __) => const HomeShell(title: 'Admin: reported posts'),
+      builder: (_, __) => const HomeShell(title: 'Reported posts'),
     ),
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
   ],
