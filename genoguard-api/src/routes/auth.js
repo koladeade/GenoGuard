@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
+const { OAuth2Client } = require('google-auth-library');
 const db = require('../db');
 const { sendResetCode } = require('../mail');
 
@@ -15,9 +16,11 @@ const roleFor = (hasScd) => (hasScd ? 'patient' : 'explorer');
 
 const email = z.string().trim().toLowerCase().email().max(254);
 const password = z.string().min(8, 'Password must be at least 8 characters').max(72);
+const fullName = z.string().trim().min(1, 'Enter your name').max(120);
 
 const registerSchema = z
   .object({
+    full_name: fullName,
     email,
     password,
     has_scd: z.boolean(),
@@ -25,6 +28,7 @@ const registerSchema = z
     location: z.string().trim().max(120).optional(),
     consent: z.literal(true, { errorMap: () => ({ message: 'Consent is required' }) }),
     consent_version: z.string(),
+    usage_logs: z.boolean().optional(),
   })
   .refine((d) => !d.has_scd || ['SS', 'SC'].includes(d.genotype), {
     message: 'The patient side is for people living with SS or SC',
@@ -47,10 +51,12 @@ function parse(schema, body, res) {
 const publicUser = (u) => ({
   id: u.id,
   email: u.email,
+  full_name: u.full_name,
   role: u.role,
   has_scd: u.has_scd,
   genotype: u.genotype,
   location: u.location,
+  has_password: !!u.password_hash,
 });
 
 async function issueTokens(user) {
@@ -74,9 +80,11 @@ router.post('/register', async (req, res) => {
   if (exists.rowCount) return res.status(409).json({ error: 'An account with this email already exists' });
   const hash = await bcrypt.hash(d.password, 12);
   const { rows } = await db.query(
-    `INSERT INTO users (email, password_hash, role, has_scd, genotype, location, consent_version, consented_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7, now()) RETURNING *`,
-    [d.email, hash, roleFor(d.has_scd), d.has_scd, d.genotype ?? null, d.location ?? null, d.consent_version]
+    `INSERT INTO users (email, full_name, password_hash, role, has_scd, genotype, location,
+                        consent_version, consented_at, usage_logs_consent)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now(), $9) RETURNING *`,
+    [d.email, d.full_name, hash, roleFor(d.has_scd), d.has_scd, d.genotype ?? null, d.location ?? null,
+     d.consent_version, d.usage_logs === true]
   );
   res.status(201).json(await issueTokens(rows[0]));
 });
@@ -85,9 +93,86 @@ router.post('/login', async (req, res) => {
   const d = parse(z.object({ email, password: z.string().min(1).max(72) }), req.body, res);
   if (!d) return;
   const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [d.email]);
-  const ok = rows[0] && (await bcrypt.compare(d.password, rows[0].password_hash));
+  const u = rows[0];
+  if (u && !u.password_hash) {
+    return res.status(401).json({ error: 'This account uses Google sign-in. Tap Continue with Google.' });
+  }
+  const ok = u && (await bcrypt.compare(d.password, u.password_hash));
   if (!ok) return res.status(401).json({ error: 'Incorrect email or password' });
-  res.json(await issueTokens(rows[0]));
+  res.json(await issueTokens(u));
+});
+
+// ---- Google sign-in -------------------------------------------------------
+// The app sends the Google ID token. We verify it here (signature + audience), never trust the app.
+//  1. Known Google account            -> log in
+//  2. Existing email (Google-verified) -> link the Google account, log in
+//  3. New user, no profile yet         -> { status: 'needs_profile' } so the app shows consent + SCD question
+//  4. New user with profile + consent  -> create account
+const googleClient = new OAuth2Client();
+const googleAudiences = () =>
+  (process.env.GOOGLE_CLIENT_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
+
+const googleSchema = z.object({
+  id_token: z.string().min(20),
+  full_name: z.string().trim().max(120).optional(),
+  has_scd: z.boolean().optional(),
+  genotype: z.enum(GENOTYPES).optional(),
+  location: z.string().trim().max(120).optional(),
+  consent: z.boolean().optional(),
+  consent_version: z.string().optional(),
+  usage_logs: z.boolean().optional(),
+});
+
+router.post('/google', async (req, res) => {
+  const d = parse(googleSchema, req.body, res);
+  if (!d) return;
+
+  const audience = googleAudiences();
+  if (!audience.length) return res.status(503).json({ error: 'Google sign-in is not set up on the server yet' });
+
+  let p;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken: d.id_token, audience });
+    p = ticket.getPayload();
+  } catch {
+    return res.status(401).json({ error: 'Google sign-in failed. Try again.' });
+  }
+  if (!p || !p.email || !p.email_verified) {
+    return res.status(401).json({ error: 'Your Google email is not verified' });
+  }
+  const mail = p.email.toLowerCase();
+
+  let found = await db.query('SELECT * FROM users WHERE google_id = $1', [p.sub]);
+  if (found.rows[0]) return res.json(await issueTokens(found.rows[0]));
+
+  found = await db.query('SELECT * FROM users WHERE email = $1', [mail]);
+  if (found.rows[0]) {
+    const linked = await db.query(
+      'UPDATE users SET google_id = $1, full_name = COALESCE(full_name, $2), updated_at = now() WHERE id = $3 RETURNING *',
+      [p.sub, p.name || null, found.rows[0].id]
+    );
+    return res.json(await issueTokens(linked.rows[0]));
+  }
+
+  if (d.has_scd === undefined) return res.json({ status: 'needs_profile', email: mail, name: p.name || '' });
+
+  const name = (d.full_name || p.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Enter your name' });
+  if (d.consent !== true) return res.status(400).json({ error: 'Consent is required' });
+  if (d.consent_version !== CONSENT_VERSION) {
+    return res.status(400).json({ error: 'Please review the latest consent text' });
+  }
+  if (d.has_scd && !['SS', 'SC'].includes(d.genotype)) {
+    return res.status(400).json({ error: 'The patient side is for people living with SS or SC' });
+  }
+  const { rows } = await db.query(
+    `INSERT INTO users (email, full_name, google_id, role, has_scd, genotype, location,
+                        consent_version, consented_at, usage_logs_consent)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now(), $9) RETURNING *`,
+    [mail, name, p.sub, roleFor(d.has_scd), d.has_scd, d.genotype ?? null, d.location ?? null,
+     d.consent_version, d.usage_logs === true]
+  );
+  res.status(201).json(await issueTokens(rows[0]));
 });
 
 // Rotating refresh tokens. Re-using an already-rotated token revokes every session for that user.
