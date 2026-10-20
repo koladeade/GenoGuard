@@ -11,7 +11,9 @@ String homeRoute(String? role) => switch (role) {
 };
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  /// [embedded] = shown as the Profile tab inside the patient shell (no Back link).
+  const ProfileScreen({super.key, this.embedded = false});
+  final bool embedded;
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
@@ -41,8 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  List<String> get _options =>
-      _hasScd ? ['SS', 'SC'] : ['AA', 'AS', 'AC', 'CC'];
+  List<String> get _options => _hasScd ? ['SS', 'SC'] : ['AA', 'AS', 'AC'];
 
   Future<void> _save() async {
     if (_name.text.trim().isEmpty) {
@@ -140,6 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return AuthScaffold(
       title: 'Profile',
+      showBack: !widget.embedded,
       backTo: homeRoute(auth.role),
       subtitle: user['email'] as String,
       children: [

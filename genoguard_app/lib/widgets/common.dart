@@ -356,11 +356,13 @@ class AuthScaffold extends StatelessWidget {
     required this.children,
     this.subtitle,
     this.backTo = '/welcome',
+    this.showBack = true,
   });
 
   final String title;
   final String? subtitle;
   final String backTo;
+  final bool showBack;
   final List<Widget> children;
 
   @override
@@ -369,20 +371,23 @@ class AuthScaffold extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => context.go(backTo),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.only(right: 12),
+          if (showBack)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => context.go(backTo),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.only(right: 12),
+                ),
+                icon: const Icon(Icons.chevron_left, color: AppColors.muted),
+                label: Text(
+                  'Back',
+                  style: AppText.body(17, FontWeight.w500, AppColors.muted),
+                ),
               ),
-              icon: const Icon(Icons.chevron_left, color: AppColors.muted),
-              label: Text(
-                'Back',
-                style: AppText.body(17, FontWeight.w500, AppColors.muted),
-              ),
-            ),
-          ),
+            )
+          else
+            const SizedBox(height: 16),
           const SizedBox(height: 4),
           Text(title, style: AppText.heading(32)),
           if (subtitle != null) ...[

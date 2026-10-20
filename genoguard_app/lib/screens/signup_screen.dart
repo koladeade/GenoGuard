@@ -40,7 +40,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   List<String> get _genoOptions =>
-      _hasScd == true ? ['SS', 'SC'] : ['AA', 'AS', 'AC', 'CC'];
+      _hasScd == true ? ['SS', 'SC'] : ['AA', 'AS', 'AC'];
 
   bool _valid(bool google) {
     if (_name.text.trim().isEmpty) return false;

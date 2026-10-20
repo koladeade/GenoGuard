@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash   text,                              -- null for Google-only accounts
   role            text NOT NULL CHECK (role IN ('patient', 'explorer', 'admin')),
   has_scd         boolean NOT NULL,
-  genotype        text CHECK (genotype IN ('AA','AS','AC','SS','SC','CC')),
+  genotype        text CHECK (genotype IN ('AA','AS','AC','SS','SC')),
   location        text,
   consent_version text NOT NULL,
   consented_at    timestamptz NOT NULL,
@@ -48,3 +48,50 @@ CREATE TABLE IF NOT EXISTS password_resets (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS password_resets_user ON password_resets(user_id);
+
+-- Patient pain log
+CREATE TABLE IF NOT EXISTS pain_entries (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  occurred_at timestamptz NOT NULL,
+  intensity   smallint NOT NULL CHECK (intensity BETWEEN 0 AND 10),
+  areas       text[] NOT NULL DEFAULT '{}',
+  notes       text,
+  is_crisis   boolean NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS pain_entries_user_time ON pain_entries(user_id, occurred_at DESC);
+
+-- Reminders (medication, hydration, appointments) -- append to the end of schema.sql
+CREATE TABLE IF NOT EXISTS reminders (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type        text NOT NULL CHECK (type IN ('medication', 'hydration', 'appointment')),
+  title       text NOT NULL,
+  dose        text,
+  doctor      text,
+  location    text,
+  recurrence  text NOT NULL CHECK (recurrence IN ('once', 'daily', 'every_2_hrs', 'as_needed')),
+  time_of_day text CHECK (time_of_day ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),  -- local wall-clock time
+  on_date     date,                                                          -- for 'once' and appointments
+  enabled     boolean NOT NULL DEFAULT true,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS reminders_user ON reminders(user_id);
+
+CREATE TABLE IF NOT EXISTS reminder_logs (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  reminder_id uuid NOT NULL REFERENCES reminders(id) ON DELETE CASCADE,
+  user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  day         date NOT NULL,
+  taken_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS reminder_logs_lookup ON reminder_logs(reminder_id, day);
+
+CREATE TABLE IF NOT EXISTS water_intake (
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  day     date NOT NULL,
+  glasses smallint NOT NULL CHECK (glasses BETWEEN 0 AND 30),
+  PRIMARY KEY (user_id, day)
+);
