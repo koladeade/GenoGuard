@@ -15,6 +15,13 @@ class AppColors {
   static const hint = Color(0xFF6B708A);
   static const green = Color(0xFF63A68A);
   static const error = Color(0xFFE5736B);
+
+  // Tints for badges, chips and the pain scale.
+  static const red = Color(0xFFD0634F);
+  static const greenTint = Color(0xFF2A4A3E);
+  static const amberTint = Color(0xFF4A3E22);
+  static const redTint = Color(0xFF4A2A27);
+  static const navBar = Color(0xFF191C2E);
 }
 
 /// Serif for headings, Figtree for everything else. Swap the font calls if the design uses others.

@@ -8,7 +8,7 @@ const db = require('../db');
 const { sendResetCode } = require('../mail');
 
 const CONSENT_VERSION = '1.0';
-const GENOTYPES = ['AA', 'AS', 'AC', 'SS', 'SC', 'CC'];
+const GENOTYPES = ['AA', 'AS', 'AC', 'SS', 'SC'];
 const REFRESH_DAYS = Number(process.env.REFRESH_TTL_DAYS || 30);
 
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
