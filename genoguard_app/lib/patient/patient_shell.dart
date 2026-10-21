@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
-import '../screens/profile_screen.dart';
 import '../theme/app_theme.dart';
 import 'home_tab.dart';
 import 'pain_state.dart';
 import 'pain_tab.dart';
+import 'profile_tab.dart';
 import 'reminders_state.dart';
 import 'reminders_tab.dart';
 
@@ -56,7 +56,7 @@ class _PatientShellState extends State<PatientShell> {
             HomeTab(onGoTo: _go),
             const PainTab(),
             const RemindersTab(),
-            const ProfileScreen(embedded: true),
+            const ProfileTab(),
           ],
         ),
       ),

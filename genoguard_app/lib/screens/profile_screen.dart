@@ -10,10 +10,70 @@ String homeRoute(String? role) => switch (role) {
   _ => '/explorer',
 };
 
+/// Confirms and deletes the account. Returns an error message, or null on success / cancel.
+Future<String?> confirmAndDeleteAccount(
+  BuildContext context,
+  AuthState auth,
+) async {
+  final hasPassword = (auth.user?['has_password'] as bool?) ?? true;
+  final pw = TextEditingController();
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (c) => AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: Text('Delete account?', style: AppText.heading(22)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            hasPassword
+                ? 'This permanently deletes your account and data. Enter your password to confirm.'
+                : 'This permanently deletes your account and data.',
+            style: AppText.body(15, FontWeight.w500, AppColors.muted),
+          ),
+          if (hasPassword) ...[
+            const SizedBox(height: 14),
+            TextField(
+              controller: pw,
+              obscureText: true,
+              decoration: const InputDecoration(hintText: 'Password'),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(c, false),
+          child: Text(
+            'Cancel',
+            style: AppText.body(16, FontWeight.w700, AppColors.muted),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(c, true),
+          child: Text(
+            'Delete',
+            style: AppText.body(16, FontWeight.w700, AppColors.error),
+          ),
+        ),
+      ],
+    ),
+  );
+  final password = pw.text;
+  pw.dispose();
+  if (confirmed != true) return null;
+  try {
+    await auth.deleteAccount(hasPassword ? password : null);
+    return null;
+  } catch (e) {
+    return errMsg(e);
+  }
+}
+
 class ProfileScreen extends StatefulWidget {
-  /// [embedded] = shown as the Profile tab inside the patient shell (no Back link).
-  const ProfileScreen({super.key, this.embedded = false});
-  final bool embedded;
+  /// Edit-profile page. Opened from the Profile tab (patients) or the /profile route.
+  const ProfileScreen({super.key});
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
@@ -76,62 +136,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _delete() async {
-    final auth = context.read<AuthState>();
-    final hasPassword = (auth.user?['has_password'] as bool?) ?? true;
-    final pw = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Delete account?', style: AppText.heading(22)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              hasPassword
-                  ? 'This permanently deletes your account and data. Enter your password to confirm.'
-                  : 'This permanently deletes your account and data.',
-              style: AppText.body(15, FontWeight.w500, AppColors.muted),
-            ),
-            if (hasPassword) ...[
-              const SizedBox(height: 14),
-              TextField(
-                controller: pw,
-                obscureText: true,
-                decoration: const InputDecoration(hintText: 'Password'),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c, false),
-            child: Text(
-              'Cancel',
-              style: AppText.body(16, FontWeight.w700, AppColors.muted),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: Text(
-              'Delete',
-              style: AppText.body(16, FontWeight.w700, AppColors.error),
-            ),
-          ),
-        ],
-      ),
-    );
-    final password = pw.text;
-    if (confirmed != true || !mounted) return;
-    try {
-      await auth.deleteAccount(hasPassword ? password : null);
-    } catch (e) {
-      if (mounted) setState(() => _err = errMsg(e));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
@@ -140,8 +144,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const SizedBox.shrink(); // logged out; the router is redirecting
 
     return AuthScaffold(
-      title: 'Profile',
-      showBack: !widget.embedded,
+      title: 'Edit profile',
+      onBack: Navigator.of(context).canPop()
+          ? () => Navigator.of(context).pop()
+          : null,
       backTo: homeRoute(auth.role),
       subtitle: user['email'] as String,
       children: [
@@ -186,18 +192,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ErrorText(_err),
         const SizedBox(height: 20),
         PrimaryButton('Save changes', onPressed: _save, busy: _busy),
-        const SizedBox(height: 28),
-        SecondaryButton('Log out', onPressed: () => auth.logout()),
-        const SizedBox(height: 8),
-        Center(
-          child: TextButton(
-            onPressed: _delete,
-            child: Text(
-              'Delete account',
-              style: AppText.body(16, FontWeight.w700, AppColors.error),
-            ),
-          ),
-        ),
       ],
     );
   }

@@ -357,12 +357,14 @@ class AuthScaffold extends StatelessWidget {
     this.subtitle,
     this.backTo = '/welcome',
     this.showBack = true,
+    this.onBack,
   });
 
   final String title;
   final String? subtitle;
   final String backTo;
   final bool showBack;
+  final VoidCallback? onBack; // overrides the default go(backTo)
   final List<Widget> children;
 
   @override
@@ -375,7 +377,7 @@ class AuthScaffold extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: () => context.go(backTo),
+                onPressed: onBack ?? () => context.go(backTo),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.only(right: 12),
                 ),
