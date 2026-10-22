@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'core/auth_state.dart';
+import 'explorer/explorer_shell.dart';
 import 'patient/patient_shell.dart';
 import 'screens/consent_screen.dart';
 import 'screens/homes.dart';
@@ -55,10 +56,7 @@ GoRouter buildRouter(AuthState auth) => GoRouter(
     GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
     GoRoute(path: '/reset', builder: (_, __) => const ResetScreen()),
     GoRoute(path: '/patient', builder: (_, __) => const PatientShell()),
-    GoRoute(
-      path: '/explorer',
-      builder: (_, __) => const HomeShell(title: 'Explore'),
-    ),
+    GoRoute(path: '/explorer', builder: (_, __) => const ExplorerShell()),
     GoRoute(
       path: '/admin',
       builder: (_, __) => const HomeShell(title: 'Admin'),
