@@ -22,7 +22,8 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/auth', authLimiter, require('./routes/auth'));
 app.use('/me', require('./routes/me'));
 app.use('/pain', require('./routes/pain'));
-  app.use('/reminders', require('./routes/reminders'));
+app.use('/reminders', require('./routes/reminders'));
+app.use('/qr', require('./routes/qr'));
 
 // Example role-guarded routes; the moderation and patient features hang off these later.
 app.get('/admin/ping', requireAuth, requireRole('admin'), (_req, res) => res.json({ ok: true }));

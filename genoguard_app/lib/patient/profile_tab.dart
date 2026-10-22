@@ -5,6 +5,7 @@ import '../screens/profile_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../compat/compat_screens.dart';
+import '../match/match_screens.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -111,7 +112,7 @@ class ProfileTab extends StatelessWidget {
             icon: Icons.qr_code_2,
             title: 'Match by QR',
             subtitle: 'Share with your approval',
-            onTap: () => _soon(context, 'Match by QR'),
+            onTap: () => openMatchByQr(context),
           ),
           _MenuRow(
             icon: Icons.menu_book_outlined,

@@ -95,3 +95,18 @@ CREATE TABLE IF NOT EXISTS water_intake (
   glasses smallint NOT NULL CHECK (glasses BETWEEN 0 AND 30),
   PRIMARY KEY (user_id, day)
 );
+
+-- Match by QR: short-lived, single-use share codes. Only a hash of the code is stored, never genotypes.
+CREATE TABLE IF NOT EXISTS qr_shares (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  code_hash    text NOT NULL,
+  status       text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'requested', 'approved', 'declined', 'expired')),
+  requester_id uuid REFERENCES users(id) ON DELETE CASCADE,
+  expires_at   timestamptz NOT NULL,
+  requested_at timestamptz,
+  decided_at   timestamptz,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS qr_shares_code ON qr_shares(code_hash);
+CREATE INDEX IF NOT EXISTS qr_shares_owner ON qr_shares(owner_id);

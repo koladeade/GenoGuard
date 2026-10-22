@@ -141,8 +141,9 @@ class _Picker extends StatelessWidget {
 // Step 2: the result
 
 class CompatibilityResultScreen extends StatelessWidget {
-  const CompatibilityResultScreen({super.key, required this.result});
+  const CompatibilityResultScreen({super.key, required this.result, this.note});
   final CompatResult result;
+  final String? note; // e.g. where the genotypes came from
 
   @override
   Widget build(BuildContext context) => AuthScaffold(
@@ -151,6 +152,10 @@ class CompatibilityResultScreen extends StatelessWidget {
     backTo: '/welcome',
     onBack: () => Navigator.of(context).pop(),
     children: [
+      if (note != null) ...[
+        Text(note!, style: AppText.body(14, FontWeight.w500, AppColors.muted)),
+        const SizedBox(height: 14),
+      ],
       _RiskCard(result),
       const SizedBox(height: 16),
       _OutcomesCard(result),
