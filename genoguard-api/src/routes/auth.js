@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const { OAuth2Client } = require('google-auth-library');
 const db = require('../db');
-const { sendResetCode } = require('../mail');
+const { sendResetCode, sendWelcome } = require('../mail');
 
 const CONSENT_VERSION = '1.0';
 const GENOTYPES = ['AA', 'AS', 'AC', 'SS', 'SC'];
@@ -86,6 +86,7 @@ router.post('/register', async (req, res) => {
     [d.email, d.full_name, hash, roleFor(d.has_scd), d.has_scd, d.genotype ?? null, d.location ?? null,
      d.consent_version, d.usage_logs === true]
   );
+      sendWelcome(rows[0]).catch((e) => console.error('welcome email failed', e.message));
   res.status(201).json(await issueTokens(rows[0]));
 });
 
@@ -172,6 +173,7 @@ router.post('/google', async (req, res) => {
     [mail, name, p.sub, roleFor(d.has_scd), d.has_scd, d.genotype ?? null, d.location ?? null,
      d.consent_version, d.usage_logs === true]
   );
+    sendWelcome(rows[0]).catch((e) => console.error('welcome email failed', e.message));
   res.status(201).json(await issueTokens(rows[0]));
 });
 

@@ -28,8 +28,9 @@ class ProfileTab extends StatelessWidget {
         : (email.contains('@') ? email.split('@').first : 'You');
     final genotype = user['genotype'] as String?;
     final location = ((user['location'] as String?) ?? '').trim();
+    final isPatient = auth.role == 'patient';
     final subtitle = [
-      'Patient',
+      isPatient ? 'Patient' : 'Explorer',
       if (genotype != null) '$genotype genotype',
       if (location.isNotEmpty) location,
     ].join(' · ');
@@ -98,30 +99,32 @@ class ProfileTab extends StatelessWidget {
         ),
         const SizedBox(height: 14),
 
-        _MenuRow(
-          icon: Icons.monitor_heart_outlined,
-          title: 'Test compatibility',
-          subtitle: 'Two genotypes, full probabilities',
-          onTap: () => _soon(context, 'Test compatibility'),
-        ),
-        _MenuRow(
-          icon: Icons.qr_code_2,
-          title: 'Match by QR',
-          subtitle: 'Share with your approval',
-          onTap: () => _soon(context, 'Match by QR'),
-        ),
-        _MenuRow(
-          icon: Icons.menu_book_outlined,
-          title: 'Learn and quiz',
-          subtitle: 'Articles and a short quiz',
-          onTap: () => _soon(context, 'Learn and quiz'),
-        ),
-        _MenuRow(
-          icon: Icons.groups_outlined,
-          title: 'Community',
-          subtitle: 'Stories from others',
-          onTap: () => _soon(context, 'Community'),
-        ),
+        if (isPatient) ...[
+          _MenuRow(
+            icon: Icons.monitor_heart_outlined,
+            title: 'Test compatibility',
+            subtitle: 'Two genotypes, full probabilities',
+            onTap: () => _soon(context, 'Test compatibility'),
+          ),
+          _MenuRow(
+            icon: Icons.qr_code_2,
+            title: 'Match by QR',
+            subtitle: 'Share with your approval',
+            onTap: () => _soon(context, 'Match by QR'),
+          ),
+          _MenuRow(
+            icon: Icons.menu_book_outlined,
+            title: 'Learn and quiz',
+            subtitle: 'Articles and a short quiz',
+            onTap: () => _soon(context, 'Learn and quiz'),
+          ),
+          _MenuRow(
+            icon: Icons.groups_outlined,
+            title: 'Community',
+            subtitle: 'Stories from others',
+            onTap: () => _soon(context, 'Community'),
+          ),
+        ],
         _MenuRow(
           icon: Icons.shield_outlined,
           title: 'Privacy and data',

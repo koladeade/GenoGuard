@@ -2,15 +2,16 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleNotConfigured implements Exception {}
 
-/// Gets a Google ID token on the device. The API verifies it; the app never trusts it.
-///
-/// Pass the client IDs when running:
-///   flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=xxx.apps.googleusercontent.com \
-///               --dart-define=GOOGLE_IOS_CLIENT_ID=yyy.apps.googleusercontent.com
 class GoogleAuth {
-  static const _iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+  static const _iosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+    defaultValue:
+        '333142466396-abh1ptovdr2541hb5hk8gj8pq7pln3u0.apps.googleusercontent.com',
+  );
   static const _serverClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '333142466396-6qisfe4t9pbre94audjscsfou0oa426c.apps.googleusercontent.com',
   );
 
   static GoogleSignIn? _client;
