@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../widgets/nav_row.dart';
 import '../widgets/soon.dart';
 import '../compat/compat_screens.dart';
+import '../match/match_screens.dart';
 
 class ExplorerHome extends StatelessWidget {
   const ExplorerHome({super.key, required this.onGoTo});
@@ -41,7 +42,7 @@ class ExplorerHome extends StatelessWidget {
           icon: Icons.qr_code_2,
           title: 'Match by QR',
           subtitle: 'Share by short-lived code, with your approval',
-          onTap: () => showSoon(context, 'Match by QR'),
+          onTap: () => openMatchByQr(context),
         ),
         NavRow(
           icon: Icons.menu_book_outlined,
