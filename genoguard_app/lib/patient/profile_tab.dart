@@ -4,6 +4,7 @@ import '../core/auth_state.dart';
 import '../screens/profile_screen.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../compat/compat_screens.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -104,7 +105,7 @@ class ProfileTab extends StatelessWidget {
             icon: Icons.monitor_heart_outlined,
             title: 'Test compatibility',
             subtitle: 'Two genotypes, full probabilities',
-            onTap: () => _soon(context, 'Test compatibility'),
+            onTap: () => openCompatibility(context),
           ),
           _MenuRow(
             icon: Icons.qr_code_2,
