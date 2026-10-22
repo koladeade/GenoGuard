@@ -4,6 +4,7 @@ import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/nav_row.dart';
 import '../widgets/soon.dart';
+import '../compat/compat_screens.dart';
 
 class ExplorerHome extends StatelessWidget {
   const ExplorerHome({super.key, required this.onGoTo});
@@ -34,7 +35,7 @@ class ExplorerHome extends StatelessWidget {
           icon: Icons.monitor_heart_outlined,
           title: 'Test compatibility',
           subtitle: 'Pick two genotypes and see the chances',
-          onTap: () => showSoon(context, 'Test compatibility'),
+          onTap: () => openCompatibility(context),
         ),
         NavRow(
           icon: Icons.qr_code_2,
