@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../compat/compat_screens.dart';
 import '../match/match_screens.dart';
+import '../learn/learn_screens.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -118,7 +119,7 @@ class ProfileTab extends StatelessWidget {
             icon: Icons.menu_book_outlined,
             title: 'Learn and quiz',
             subtitle: 'Articles and a short quiz',
-            onTap: () => _soon(context, 'Learn and quiz'),
+            onTap: () => openLearn(context),
           ),
           _MenuRow(
             icon: Icons.groups_outlined,
