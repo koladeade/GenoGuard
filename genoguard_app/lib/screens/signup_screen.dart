@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/location_field.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -188,10 +189,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              AppTextField(
-                label: 'City or area',
+              LocationField(
                 controller: _loc,
-                hint: 'e.g. Lagos',
                 helper: 'Used only for weather tips. You can change it later.',
                 textInputAction: TextInputAction.done,
               ),

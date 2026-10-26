@@ -8,6 +8,7 @@ import 'pain_entry_sheet.dart';
 import 'pain_state.dart';
 import 'reminder_utils.dart';
 import 'reminders_state.dart';
+import 'weather_card.dart';
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key, required this.onGoTo});
@@ -102,6 +103,8 @@ class HomeTab extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
+
+          WeatherCard(location: user['location'] as String?),
 
           // Days since last crisis
           _CrisisCard(summary: s),
