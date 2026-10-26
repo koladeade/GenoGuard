@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/location_field.dart';
 
 String homeRoute(String? role) => switch (role) {
   'admin' => '/admin',
@@ -153,11 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         AppTextField(label: 'Full name', controller: _name),
         const SizedBox(height: 16),
-        AppTextField(
-          label: 'City or area',
-          controller: _loc,
-          hint: 'e.g. Lagos',
-        ),
+        LocationField(controller: _loc),
         const SizedBox(height: 22),
         Text(
           'DO YOU LIVE WITH SICKLE CELL DISEASE (SS OR SC)?',
