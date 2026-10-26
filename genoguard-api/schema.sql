@@ -110,3 +110,13 @@ CREATE TABLE IF NOT EXISTS qr_shares (
 );
 CREATE INDEX IF NOT EXISTS qr_shares_code ON qr_shares(code_hash);
 CREATE INDEX IF NOT EXISTS qr_shares_owner ON qr_shares(owner_id);
+
+-- In app quiz
+CREATE TABLE IF NOT EXISTS quiz_responses (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  intention  smallint NOT NULL CHECK (intention BETWEEN 1 AND 5),
+  confidence smallint NOT NULL CHECK (confidence BETWEEN 1 AND 5),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS quiz_responses_user ON quiz_responses(user_id, created_at DESC);

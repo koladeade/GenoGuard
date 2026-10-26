@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../learn/learn_content.dart';
+import '../learn/learn_screens.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
-import '../widgets/soon.dart';
 import '../patient/reminder_utils.dart' show kBlue, kBlueTint;
 
 class LearnTab extends StatelessWidget {
   const LearnTab({super.key});
-
-  static const _articles = [
-    'What is sickle cell disease?',
-    'Genotypes explained',
-    'Why test before marriage',
-    'Managing a pain crisis at home',
-  ];
 
   static const _sources = [
     (
@@ -44,15 +38,29 @@ class LearnTab extends StatelessWidget {
     children: [
       Text('Learn', style: AppText.heading(32)),
       const SizedBox(height: 16),
-      for (final a in _articles) ...[
+      for (final a in kArticles) ...[
         AppCard(
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap: () => showSoon(context, 'Articles'),
+            onTap: () => openArticle(context, a),
             child: Row(
               children: [
                 Expanded(
-                  child: Text(a, style: AppText.body(19, FontWeight.w700)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a.title, style: AppText.body(19, FontWeight.w700)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${a.minutes} min read',
+                        style: AppText.body(
+                          14,
+                          FontWeight.w500,
+                          AppColors.muted,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Container(
@@ -110,7 +118,7 @@ class LearnTab extends StatelessWidget {
       const SizedBox(height: 12),
       InkWell(
         borderRadius: BorderRadius.circular(22),
-        onTap: () => showSoon(context, 'The knowledge quiz'),
+        onTap: () => openQuiz(context),
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
