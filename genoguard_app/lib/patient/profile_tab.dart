@@ -7,6 +7,7 @@ import '../widgets/common.dart';
 import '../compat/compat_screens.dart';
 import '../match/match_screens.dart';
 import '../learn/learn_screens.dart';
+import '../community/community_screens.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -125,7 +126,7 @@ class ProfileTab extends StatelessWidget {
             icon: Icons.groups_outlined,
             title: 'Community',
             subtitle: 'Stories from others',
-            onTap: () => _soon(context, 'Community'),
+            onTap: () => openCommunity(context),
           ),
         ],
         _MenuRow(
