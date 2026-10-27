@@ -120,3 +120,33 @@ CREATE TABLE IF NOT EXISTS quiz_responses (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS quiz_responses_user ON quiz_responses(user_id, created_at DESC);
+
+-- Community: posts, comments and reports. Deleting a user or a post removes what hangs off it.
+CREATE TABLE IF NOT EXISTS posts (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_id  uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body       text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 1000),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS posts_created ON posts(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS comments (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id    uuid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  author_id  uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body       text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 500),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS comments_post ON comments(post_id, created_at);
+
+-- One report per person per post. 'open' reports form the admin queue; 'dismissed' means an admin kept the post.
+CREATE TABLE IF NOT EXISTS post_reports (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id     uuid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  reporter_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reason      text NOT NULL CHECK (reason IN ('harmful_advice', 'abuse', 'spam', 'privacy', 'other')),
+  status      text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'dismissed')),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (post_id, reporter_id)
+);
+CREATE INDEX IF NOT EXISTS post_reports_open ON post_reports(status, post_id);
