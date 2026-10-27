@@ -4,7 +4,7 @@ import 'core/auth_state.dart';
 import 'explorer/explorer_shell.dart';
 import 'patient/patient_shell.dart';
 import 'screens/consent_screen.dart';
-import 'screens/homes.dart';
+import 'admin/admin_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/reset_screen.dart';
@@ -57,10 +57,7 @@ GoRouter buildRouter(AuthState auth) => GoRouter(
     GoRoute(path: '/reset', builder: (_, __) => const ResetScreen()),
     GoRoute(path: '/patient', builder: (_, __) => const PatientShell()),
     GoRoute(path: '/explorer', builder: (_, __) => const ExplorerShell()),
-    GoRoute(
-      path: '/admin',
-      builder: (_, __) => const HomeShell(title: 'Admin'),
-    ),
+    GoRoute(path: '/admin', builder: (_, __) => const AdminShell()),
     GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
   ],
 );
