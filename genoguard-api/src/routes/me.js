@@ -10,6 +10,7 @@ router.use(requireAuth);
 router.get('/', (req, res) => res.json({ user: publicUser(req.user) }));
 
 // Editing has_scd re-derives the role (patient <-> explorer). Admins keep their role.
+// usage_logs_consent is the usage-log switch on the Privacy and data screen.
 router.patch('/', async (req, res) => {
   const r = z
     .object({
@@ -17,6 +18,7 @@ router.patch('/', async (req, res) => {
       has_scd: z.boolean().optional(),
       genotype: z.enum(GENOTYPES).nullable().optional(),
       location: z.string().trim().max(120).nullable().optional(),
+      usage_logs_consent: z.boolean().optional(),
     })
     .safeParse(req.body);
   if (!r.success) return res.status(400).json({ error: r.error.issues[0].message });
@@ -26,14 +28,15 @@ router.patch('/', async (req, res) => {
   const hasScd = r.data.has_scd ?? u.has_scd;
   const genotype = r.data.genotype !== undefined ? r.data.genotype : u.genotype;
   const location = r.data.location !== undefined ? r.data.location : u.location;
+  const usageLogs = r.data.usage_logs_consent ?? u.usage_logs_consent;
   if (hasScd && !['SS', 'SC'].includes(genotype)) {
     return res.status(400).json({ error: 'The patient side is for people living with SS or SC' });
   }
   const role = u.role === 'admin' ? 'admin' : roleFor(hasScd);
   const { rows } = await db.query(
-    `UPDATE users SET full_name=$1, has_scd=$2, genotype=$3, location=$4, role=$5, updated_at=now()
-     WHERE id=$6 RETURNING *`,
-    [fullName, hasScd, genotype, location, role, u.id]
+    `UPDATE users SET full_name=$1, has_scd=$2, genotype=$3, location=$4, role=$5, usage_logs_consent=$6, updated_at=now()
+     WHERE id=$7 RETURNING *`,
+    [fullName, hasScd, genotype, location, role, usageLogs, u.id]
   );
   res.json({ user: publicUser(rows[0]) });
 });
