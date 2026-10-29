@@ -191,6 +191,12 @@ class AuthState extends ChangeNotifier {
     notifyListeners(); // role may have changed; the router re-evaluates
   }
 
+  Future<void> setUsageLogs(bool on) async {
+    final r = await api.dio.patch('/me', data: {'usage_logs_consent': on});
+    user = Map<String, dynamic>.from(r.data['user']);
+    notifyListeners();
+  }
+
   /// Password accounts pass their password; Google-only accounts pass null.
   Future<void> deleteAccount(String? password) async {
     await api.dio.delete(
