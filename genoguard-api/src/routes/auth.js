@@ -57,6 +57,7 @@ const publicUser = (u) => ({
   genotype: u.genotype,
   location: u.location,
   has_password: !!u.password_hash,
+  consent_version: u.consent_version, consented_at: u.consented_at, usage_logs_consent: !!u.usage_logs_consent,
 });
 
 async function issueTokens(user) {
