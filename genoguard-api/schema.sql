@@ -150,3 +150,13 @@ CREATE TABLE IF NOT EXISTS post_reports (
   UNIQUE (post_id, reporter_id)
 );
 CREATE INDEX IF NOT EXISTS post_reports_open ON post_reports(status, post_id);
+
+-- Usage logs. Only written when users.usage_logs_consent is true. Event names only: no text, no health data.
+CREATE TABLE IF NOT EXISTS usage_events (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event      text NOT NULL CHECK (event IN ('compat_check', 'qr_match', 'learning_open')),
+  item       text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS usage_events_user ON usage_events(user_id, created_at DESC);
