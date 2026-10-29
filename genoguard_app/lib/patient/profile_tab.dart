@@ -8,6 +8,7 @@ import '../compat/compat_screens.dart';
 import '../match/match_screens.dart';
 import '../learn/learn_screens.dart';
 import '../community/community_screens.dart';
+import '../privacy/privacy_screen.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -133,7 +134,7 @@ class ProfileTab extends StatelessWidget {
           icon: Icons.shield_outlined,
           title: 'Privacy and data',
           subtitle: 'Consent and usage logs',
-          onTap: () => _soon(context, 'Privacy and data'),
+          onTap: () => openPrivacy(context),
         ),
 
         // Light mode: the switch is here to match the design; the light theme is not built yet.
