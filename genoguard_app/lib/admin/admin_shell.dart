@@ -5,6 +5,7 @@ import '../community/community_screens.dart';
 import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import 'package:provider/provider.dart';
 
 /// Admin home: the queue of reported posts. "Keep" closes the reports, "Delete" removes the post.
 class AdminShell extends StatefulWidget {
@@ -77,6 +78,11 @@ class _AdminShellState extends State<AdminShell> {
     appBar: AppBar(
       title: const Text('Reported posts'),
       actions: [
+        IconButton(
+          tooltip: 'Log out',
+          icon: const Icon(Icons.logout, color: AppColors.gold),
+          onPressed: () => context.read<AuthState>().logout(),
+        ),
         IconButton(
           icon: const Icon(Icons.person_outline, color: AppColors.gold),
           onPressed: () => context.go('/profile'),
