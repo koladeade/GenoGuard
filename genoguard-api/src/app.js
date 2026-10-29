@@ -26,6 +26,7 @@ app.use('/reminders', require('./routes/reminders'));
 app.use('/qr', require('./routes/qr'));
 app.use('/quiz', require('./routes/quiz'));
 app.use('/community', require('./routes/community'));
+app.use('/usage', require('./routes/usage'));
 
 // Example role-guarded routes; the moderation and patient features hang off these later.
 app.get('/admin/ping', requireAuth, requireRole('admin'), (_req, res) => res.json({ ok: true }));
