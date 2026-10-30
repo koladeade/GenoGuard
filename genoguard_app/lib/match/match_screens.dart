@@ -11,7 +11,6 @@ import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/nav_row.dart';
 import 'match_api.dart';
-import '../core/usage.dart';
 
 /// Opens Match by QR from anywhere in the app.
 void openMatchByQr(BuildContext context) {
@@ -27,7 +26,6 @@ MatchApi _api(BuildContext context) =>
 void _showResult(BuildContext context, ShareStatus s) {
   final you = s.you, partner = s.partner;
   if (you == null || partner == null) return;
-  Usage.log(context, 'qr_match');
   Navigator.of(context).pushReplacement(
     MaterialPageRoute<void>(
       builder: (_) => CompatibilityResultScreen(
@@ -38,6 +36,43 @@ void _showResult(BuildContext context, ShareStatus s) {
       ),
     ),
   );
+}
+
+/// Opens the result for an approved share from a list (keeps the list underneath).
+Future<void> _openApproved(BuildContext context, String shareId) async {
+  try {
+    final s = await _api(context).status(shareId);
+    if (!context.mounted) return;
+    final you = s.you, partner = s.partner;
+    if (s.status != 'approved' || you == null || partner == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This result is no longer available. Ask for a new invitation.',
+            ),
+          ),
+        );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CompatibilityResultScreen(
+          result: computeCompat(you, partner),
+          note:
+              'Based on the genotypes saved on your profile and ${s.otherName ?? 'their'} profile. '
+              'These have not been independently verified.',
+        ),
+      ),
+    );
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(errMsg(e))));
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -87,13 +122,29 @@ class MatchByQrScreen extends StatelessWidget {
           child: NavRow(
             icon: Icons.qr_code_scanner,
             title: 'Scan a code',
-            subtitle: 'Scan their QR, or type the code.',
+            subtitle:
+                'Scan their QR, or type a code they gave you or emailed you.',
             onTap: () {
               if (ready)
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => const ScanCodeScreen(),
                   ),
+                );
+            },
+          ),
+        ),
+        Opacity(
+          opacity: ready ? 1 : 0.45,
+          child: NavRow(
+            icon: Icons.mail_outline,
+            title: 'Invite by email',
+            subtitle:
+                'For someone who is not next to you. You approve each share.',
+            onTap: () {
+              if (ready)
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const InviteScreen()),
                 );
             },
           ),
@@ -555,5 +606,267 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
         PrimaryButton('Try again', onPressed: _again),
       ],
     },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Invite by email: send an invitation, see the ones you sent and received, approve requests
+
+class InviteScreen extends StatefulWidget {
+  const InviteScreen({super.key});
+  @override
+  State<InviteScreen> createState() => _InviteScreenState();
+}
+
+class _InviteScreenState extends State<InviteScreen> {
+  late final MatchApi _api0 = _api(context);
+  final _email = TextEditingController();
+  List<InviteItem> _sent = [];
+  List<InviteItem> _received = [];
+  bool _loading = true;
+  bool _sending = false;
+  final Set<String> _busy = {};
+  String? _err;
+  String? _ok;
+  Timer? _refresh;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    // Someone may accept while this screen is open.
+    _refresh = Timer.periodic(const Duration(seconds: 20), (_) => _load());
+  }
+
+  @override
+  void dispose() {
+    _refresh?.cancel();
+    _email.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final r = await _api0.invites();
+      if (!mounted) return;
+      setState(() {
+        _sent = r.sent;
+        _received = r.received;
+      });
+    } catch (_) {
+      // Keep what is on screen; the next refresh tries again.
+    } finally {
+      if (mounted && _loading) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _send() async {
+    final email = _email.text.trim();
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      setState(() {
+        _err = 'Enter a valid email address';
+        _ok = null;
+      });
+      return;
+    }
+    setState(() {
+      _sending = true;
+      _err = null;
+      _ok = null;
+    });
+    try {
+      await _api0.invite(email);
+      if (!mounted) return;
+      _email.clear();
+      setState(() => _ok = 'Invitation sent. It works for 7 days.');
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _err = errMsg(e));
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _run(String id, Future<void> Function() action) async {
+    setState(() {
+      _busy.add(id);
+      _err = null;
+      _ok = null;
+    });
+    try {
+      await action();
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _err = errMsg(e));
+    } finally {
+      if (mounted) setState(() => _busy.remove(id));
+    }
+  }
+
+  String _label(InviteItem i, {required bool sent}) {
+    final who = i.otherName ?? 'They';
+    switch (i.status) {
+      case 'open':
+        return 'Waiting for them to accept';
+      case 'requested':
+        return sent
+            ? '$who accepted and wants to compare'
+            : 'Waiting for $who to approve';
+      case 'approved':
+        return 'Approved. Tap to see the result';
+      case 'declined':
+        return sent ? 'You declined' : '$who declined';
+      default:
+        return 'Expired';
+    }
+  }
+
+  Widget _card(InviteItem i, {required bool sent}) {
+    final busy = _busy.contains(i.id);
+    final title = sent
+        ? (i.email ?? 'Invitation')
+        : 'From ${i.otherName ?? 'someone'}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: AppText.body(17, FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text(
+              _label(i, sent: sent),
+              style: AppText.body(15, FontWeight.w500, AppColors.muted),
+            ),
+            if (i.status == 'approved') ...[
+              const SizedBox(height: 12),
+              SecondaryButton(
+                'View result',
+                onPressed: busy ? null : () => _openApproved(context, i.id),
+              ),
+            ],
+            if (sent && i.status == 'requested') ...[
+              const SizedBox(height: 12),
+              Text(
+                'Allow ${i.otherName ?? 'them'} to see your genotype, and you to see theirs?',
+                style: AppText.body(15, FontWeight.w600),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: SecondaryButton(
+                      'Decline',
+                      color: AppColors.error,
+                      onPressed: busy
+                          ? null
+                          : () => _run(i.id, () => _api0.decide(i.id, false)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: PrimaryButton(
+                      'Allow',
+                      onPressed: busy
+                          ? null
+                          : () => _run(i.id, () => _api0.decide(i.id, true)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (i.status == 'expired' || i.status == 'declined') ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: busy
+                    ? null
+                    : () => _run(i.id, () => _api0.removeInvite(i.id)),
+                child: Text(
+                  'Remove',
+                  style: AppText.body(15, FontWeight.w700, AppColors.muted),
+                ),
+              ),
+            ],
+            if (sent && i.status == 'open') ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: busy
+                    ? null
+                    : () => _run(i.id, () => _api0.cancelInvite(i.id)),
+                child: Text(
+                  'Cancel invitation',
+                  style: AppText.body(15, FontWeight.w700, AppColors.muted),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => AuthScaffold(
+    title: 'Invite by email',
+    subtitle:
+        'For someone who is not next to you. Nothing is shared until you approve.',
+    backTo: '/welcome',
+    onBack: () => Navigator.of(context).pop(),
+    children: [
+      AppTextField(
+        label: 'Their email address',
+        controller: _email,
+        keyboardType: TextInputType.emailAddress,
+        textInputAction: TextInputAction.send,
+        onSubmitted: (_) => _send(),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'They get an email with a code and must sign in to GenoGuard with that same address. '
+        'The email does not mention your genotype.',
+        style: AppText.body(14, FontWeight.w500, AppColors.muted),
+      ),
+      if (_err != null) ...[
+        const SizedBox(height: 10),
+        Text(_err!, style: AppText.body(15, FontWeight.w600, AppColors.error)),
+      ],
+      if (_ok != null) ...[
+        const SizedBox(height: 10),
+        Text(_ok!, style: AppText.body(15, FontWeight.w600, AppColors.green)),
+      ],
+      const SizedBox(height: 14),
+      PrimaryButton(
+        'Send invitation',
+        busy: _sending,
+        onPressed: _sending ? null : _send,
+      ),
+      const SizedBox(height: 26),
+      if (_loading)
+        const Center(child: CircularProgressIndicator(color: AppColors.gold))
+      else ...[
+        if (_sent.isNotEmpty) ...[
+          Text(
+            'Sent by you',
+            style: AppText.body(15, FontWeight.w700, AppColors.muted),
+          ),
+          const SizedBox(height: 10),
+          for (final i in _sent) _card(i, sent: true),
+        ],
+        if (_received.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Sent to you',
+            style: AppText.body(15, FontWeight.w700, AppColors.muted),
+          ),
+          const SizedBox(height: 10),
+          for (final i in _received) _card(i, sent: false),
+        ],
+        if (_sent.isEmpty && _received.isEmpty)
+          Text(
+            'No invitations yet.',
+            style: AppText.body(16, FontWeight.w500, AppColors.muted),
+          ),
+      ],
+    ],
   );
 }

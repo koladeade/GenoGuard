@@ -172,3 +172,14 @@ CREATE TABLE IF NOT EXISTS comment_reports (
   UNIQUE (comment_id, reporter_id)
 );
 CREATE INDEX IF NOT EXISTS comment_reports_open ON comment_reports(status, comment_id);
+
+-- Match by email invite: reuses qr_shares. 'invite' shares last days, are tied to one email address and
+-- are listed for both people so the match can finish later. Run once after schema_qr.sql.
+ALTER TABLE qr_shares ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'qr';
+ALTER TABLE qr_shares ADD COLUMN IF NOT EXISTS invitee_email text;
+CREATE INDEX IF NOT EXISTS qr_shares_invitee ON qr_shares(invitee_email);
+CREATE INDEX IF NOT EXISTS qr_shares_requester ON qr_shares(requester_id);
+
+-- Each person can remove a finished invitation from their own list.
+ALTER TABLE qr_shares ADD COLUMN IF NOT EXISTS owner_hidden boolean NOT NULL DEFAULT false;
+ALTER TABLE qr_shares ADD COLUMN IF NOT EXISTS requester_hidden boolean NOT NULL DEFAULT false;
