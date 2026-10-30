@@ -4,9 +4,8 @@ import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/geno_logo.dart';
 
-// TODO: replace with the wording from your approved ethics/consent form, then bump
-// kConsentVersion (app) and CONSENT_VERSION (API) together.
 const _collected = [
   'Account details: name, email, password (stored hashed)',
   'Your genotype, as you report it',
@@ -33,7 +32,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
         children: [
           const Align(
             alignment: Alignment.centerLeft,
-            child: IconBadge(icon: Icons.shield_outlined, size: 96),
+            child: GenoLogo(width: 64),
           ),
           const SizedBox(height: 20),
           Text('Before you start', style: AppText.heading(34)),
@@ -67,7 +66,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
                           child: Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.muted,
                               shape: BoxShape.circle,
                             ),

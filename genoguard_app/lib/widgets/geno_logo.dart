@@ -1,0 +1,20 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+/// GenoGuard mark: a gold shield (protection) holding a DNA helix (genotype).
+class GenoLogo extends StatelessWidget {
+  const GenoLogo({super.key, this.width = 96});
+  final double width;
+
+  @override
+  Widget build(BuildContext context) =>
+      SvgPicture.string(_logoSvg, width: width, height: width * 140 / 120);
+}
+
+const _logoSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9C77C"/><stop offset="1" stop-color="#C79A3F"/></linearGradient></defs>
+<path d="M60 6 L106 22 V64 C106 96 86 120 60 133 C34 120 14 96 14 64 V22 Z" fill="url(#g)" stroke="url(#g)" stroke-width="6" stroke-linejoin="round"/>
+<g fill="none" stroke="#11131E" stroke-linecap="round" stroke-linejoin="round">
+<g stroke-width="5"><path d="M60.0 40.0 L61.9 40.8 L63.7 41.6 L65.5 42.4 L67.2 43.2 L68.8 44.0 L70.3 44.8 L71.6 45.6 L72.7 46.4 L73.6 47.2 L74.3 48.0 L74.7 48.8 L75.0 49.6 L75.0 50.4 L74.7 51.2 L74.3 52.0 L73.6 52.8 L72.7 53.6 L71.6 54.4 L70.3 55.2 L68.8 56.0 L67.2 56.8 L65.5 57.6 L63.7 58.4 L61.9 59.2 L60.0 60.0 L58.1 60.8 L56.3 61.6 L54.5 62.4 L52.8 63.2 L51.2 64.0 L49.7 64.8 L48.4 65.6 L47.3 66.4 L46.4 67.2 L45.7 68.0 L45.3 68.8 L45.0 69.6 L45.0 70.4 L45.3 71.2 L45.7 72.0 L46.4 72.8 L47.3 73.6 L48.4 74.4 L49.7 75.2 L51.2 76.0 L52.8 76.8 L54.5 77.6 L56.3 78.4 L58.1 79.2 L60.0 80.0 L61.9 80.8 L63.7 81.6 L65.5 82.4 L67.2 83.2 L68.8 84.0 L70.3 84.8 L71.6 85.6 L72.7 86.4 L73.6 87.2 L74.3 88.0 L74.7 88.8 L75.0 89.6 L75.0 90.4 L74.7 91.2 L74.3 92.0 L73.6 92.8 L72.7 93.6 L71.6 94.4 L70.3 95.2 L68.8 96.0 L67.2 96.8 L65.5 97.6 L63.7 98.4 L61.9 99.2 L60.0 100.0 L58.1 100.8 L56.3 101.6 L54.5 102.4 L52.8 103.2 L51.2 104.0"/><path d="M60.0 40.0 L58.1 40.8 L56.3 41.6 L54.5 42.4 L52.8 43.2 L51.2 44.0 L49.7 44.8 L48.4 45.6 L47.3 46.4 L46.4 47.2 L45.7 48.0 L45.3 48.8 L45.0 49.6 L45.0 50.4 L45.3 51.2 L45.7 52.0 L46.4 52.8 L47.3 53.6 L48.4 54.4 L49.7 55.2 L51.2 56.0 L52.8 56.8 L54.5 57.6 L56.3 58.4 L58.1 59.2 L60.0 60.0 L61.9 60.8 L63.7 61.6 L65.5 62.4 L67.2 63.2 L68.8 64.0 L70.3 64.8 L71.6 65.6 L72.7 66.4 L73.6 67.2 L74.3 68.0 L74.7 68.8 L75.0 69.6 L75.0 70.4 L74.7 71.2 L74.3 72.0 L73.6 72.8 L72.7 73.6 L71.6 74.4 L70.3 75.2 L68.8 76.0 L67.2 76.8 L65.5 77.6 L63.7 78.4 L61.9 79.2 L60.0 80.0 L58.1 80.8 L56.3 81.6 L54.5 82.4 L52.8 83.2 L51.2 84.0 L49.7 84.8 L48.4 85.6 L47.3 86.4 L46.4 87.2 L45.7 88.0 L45.3 88.8 L45.0 89.6 L45.0 90.4 L45.3 91.2 L45.7 92.0 L46.4 92.8 L47.3 93.6 L48.4 94.4 L49.7 95.2 L51.2 96.0 L52.8 96.8 L54.5 97.6 L56.3 98.4 L58.1 99.2 L60.0 100.0 L61.9 100.8 L63.7 101.6 L65.5 102.4 L67.2 103.2 L68.8 104.0"/></g>
+<g stroke-width="3.2" opacity="0.9"><line x1="74.9" y1="50.7" x2="45.1" y2="50.7"/><line x1="56.9" y1="61.3" x2="63.1" y2="61.3"/><line x1="45.7" y1="72.0" x2="74.3" y2="72.0"/><line x1="66.1" y1="82.7" x2="53.9" y2="82.7"/><line x1="73.0" y1="93.3" x2="47.0" y2="93.3"/></g></g></svg>''';
