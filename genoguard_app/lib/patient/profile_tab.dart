@@ -137,40 +137,6 @@ class ProfileTab extends StatelessWidget {
           onTap: () => openPrivacy(context),
         ),
 
-        // Light mode: the switch is here to match the design; the light theme is not built yet.
-        AppCard(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Light mode',
-                      style: AppText.body(19, FontWeight.w700),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Switch the app appearance',
-                      style: AppText.body(15, FontWeight.w500, AppColors.muted),
-                    ),
-                  ],
-                ),
-              ),
-              Switch(
-                value: false,
-                onChanged: (_) => _soon(context, 'Light mode'),
-                activeThumbColor: Colors.white,
-                activeTrackColor: AppColors.green,
-                inactiveThumbColor: Colors.white,
-                inactiveTrackColor: AppColors.surfaceAlt,
-                trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-
         SecondaryButton('Log out', onPressed: () => auth.logout()),
         const SizedBox(height: 12),
         _OutlineDanger(
