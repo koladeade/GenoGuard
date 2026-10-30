@@ -183,3 +183,17 @@ CREATE INDEX IF NOT EXISTS qr_shares_requester ON qr_shares(requester_id);
 -- Each person can remove a finished invitation from their own list.
 ALTER TABLE qr_shares ADD COLUMN IF NOT EXISTS owner_hidden boolean NOT NULL DEFAULT false;
 ALTER TABLE qr_shares ADD COLUMN IF NOT EXISTS requester_hidden boolean NOT NULL DEFAULT false;
+
+-- Admin side: deactivating accounts and a log of what admins did.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS disabled_at timestamptz;
+
+-- No personal data here: targets are described by a short id and role, never an email or name.
+CREATE TABLE IF NOT EXISTS admin_audit (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_id    uuid REFERENCES users(id) ON DELETE SET NULL,
+  admin_label text NOT NULL,
+  action      text NOT NULL,
+  detail      text,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS admin_audit_created ON admin_audit(created_at DESC);

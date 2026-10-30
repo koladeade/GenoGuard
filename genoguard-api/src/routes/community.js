@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 const db = require('../db');
 const { requireAuth, requireRole } = require('../auth');
+const { audit } = require('../audit');
 
 // Community. Patients and explorers read and write. Admins review reported posts and can delete any post.
 // Only a first name is ever shown, never an email, genotype or role.
@@ -174,6 +175,7 @@ router.delete('/posts/:id', async (req, res) => {
     [req.params.id, req.user.id, isAdmin]
   );
   if (!rowCount) return res.status(404).json({ error: 'Post not found' });
+  if (isAdmin) await audit(req, 'post_deleted', `post ${req.params.id.slice(0, 8)}`);
   res.json({ ok: true });
 });
 
@@ -206,6 +208,7 @@ router.delete('/comments/:id', async (req, res) => {
     [req.params.id, req.user.id, isAdmin]
   );
   if (!rowCount) return res.status(404).json({ error: 'Comment not found' });
+  if (isAdmin) await audit(req, 'comment_deleted', `comment ${req.params.id.slice(0, 8)}`);
   res.json({ ok: true });
 });
 
@@ -278,6 +281,7 @@ router.post('/reports/comments/:id/dismiss', admins, async (req, res) => {
     [req.params.id]
   );
   if (!rowCount) return res.status(404).json({ error: 'No open reports for that comment' });
+  await audit(req, 'comment_kept', `comment ${req.params.id.slice(0, 8)}`);
   res.json({ ok: true });
 });
 
@@ -316,6 +320,7 @@ router.post('/reports/:postId/dismiss', admins, async (req, res) => {
     [req.params.postId]
   );
   if (!rowCount) return res.status(404).json({ error: 'No open reports for that post' });
+  await audit(req, 'post_kept', `post ${req.params.postId.slice(0, 8)}`);
   res.json({ ok: true });
 });
 // "Delete": DELETE /community/posts/:id (admins may delete any post; its comments and reports go with it).

@@ -12,6 +12,7 @@ async function requireAuth(req, res, next) {
     const { rows } = await db.query('SELECT * FROM users WHERE id = $1', [payload.sub]);
     if (!rows[0]) return res.status(401).json({ error: 'Not signed in' });
     req.user = rows[0];
+       if (req.user.disabled_at) return res.status(403).json({ error: 'This account has been disabled' });
     next();
   } catch {
     res.status(401).json({ error: 'Session expired' });

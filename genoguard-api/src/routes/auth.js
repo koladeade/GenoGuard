@@ -11,6 +11,7 @@ const CONSENT_VERSION = '1.0';
 const GENOTYPES = ['AA', 'AS', 'AC', 'SS', 'SC'];
 const REFRESH_DAYS = Number(process.env.REFRESH_TTL_DAYS || 30);
 
+const DISABLED = 'This account has been disabled';
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
 const roleFor = (hasScd) => (hasScd ? 'patient' : 'explorer');
 
@@ -87,7 +88,7 @@ router.post('/register', async (req, res) => {
     [d.email, d.full_name, hash, roleFor(d.has_scd), d.has_scd, d.genotype ?? null, d.location ?? null,
      d.consent_version, d.usage_logs === true]
   );
-      sendWelcome(rows[0]).catch((e) => console.error('welcome email failed', e.message));
+  sendWelcome(rows[0]).catch((e) => console.error('welcome email failed', e.message));
   res.status(201).json(await issueTokens(rows[0]));
 });
 
@@ -101,6 +102,7 @@ router.post('/login', async (req, res) => {
   }
   const ok = u && (await bcrypt.compare(d.password, u.password_hash));
   if (!ok) return res.status(401).json({ error: 'Incorrect email or password' });
+  if (u.disabled_at) return res.status(403).json({ error: DISABLED });
   res.json(await issueTokens(u));
 });
 
@@ -145,10 +147,14 @@ router.post('/google', async (req, res) => {
   const mail = p.email.toLowerCase();
 
   let found = await db.query('SELECT * FROM users WHERE google_id = $1', [p.sub]);
-  if (found.rows[0]) return res.json(await issueTokens(found.rows[0]));
+  if (found.rows[0]) {
+    if (found.rows[0].disabled_at) return res.status(403).json({ error: DISABLED });
+    return res.json(await issueTokens(found.rows[0]));
+  }
 
   found = await db.query('SELECT * FROM users WHERE email = $1', [mail]);
   if (found.rows[0]) {
+    if (found.rows[0].disabled_at) return res.status(403).json({ error: DISABLED });
     const linked = await db.query(
       'UPDATE users SET google_id = $1, full_name = COALESCE(full_name, $2), updated_at = now() WHERE id = $3 RETURNING *',
       [p.sub, p.name || null, found.rows[0].id]
@@ -174,7 +180,7 @@ router.post('/google', async (req, res) => {
     [mail, name, p.sub, roleFor(d.has_scd), d.has_scd, d.genotype ?? null, d.location ?? null,
      d.consent_version, d.usage_logs === true]
   );
-    sendWelcome(rows[0]).catch((e) => console.error('welcome email failed', e.message));
+  sendWelcome(rows[0]).catch((e) => console.error('welcome email failed', e.message));
   res.status(201).json(await issueTokens(rows[0]));
 });
 
@@ -192,6 +198,7 @@ router.post('/refresh', async (req, res) => {
   await db.query('UPDATE refresh_tokens SET revoked_at = now() WHERE id = $1', [t.id]);
   const u = await db.query('SELECT * FROM users WHERE id = $1', [t.user_id]);
   if (!u.rows[0]) return res.status(401).json({ error: 'Session expired' });
+  if (u.rows[0].disabled_at) return res.status(403).json({ error: DISABLED });
   res.json(await issueTokens(u.rows[0]));
 });
 
