@@ -15,6 +15,8 @@ class CommunityTab extends StatefulWidget {
 class _CommunityTabState extends State<CommunityTab> {
   List<Post> _posts = [];
   bool _loading = true;
+  bool _hasMore = false;
+  bool _loadingMore = false;
   String? _err;
 
   @override
@@ -25,16 +27,37 @@ class _CommunityTabState extends State<CommunityTab> {
 
   Future<void> _load() async {
     try {
-      final p = await communityApi(context).posts();
+      final page = await communityApi(context).posts();
       if (!mounted) return;
       setState(() {
-        _posts = p;
+        _posts = page.posts;
+        _hasMore = page.hasMore;
         _err = null;
       });
     } catch (e) {
       if (mounted) setState(() => _err = errMsg(e));
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_loadingMore || _posts.isEmpty) return;
+    setState(() => _loadingMore = true);
+    try {
+      final page = await communityApi(
+        context,
+      ).posts(before: _posts.last.createdAt);
+      if (!mounted) return;
+      final have = _posts.map((p) => p.id).toSet();
+      setState(() {
+        _posts = [..._posts, ...page.posts.where((p) => !have.contains(p.id))];
+        _hasMore = page.hasMore;
+      });
+    } catch (e) {
+      if (mounted) snack(context, errMsg(e));
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
     }
   }
 
@@ -129,6 +152,14 @@ class _CommunityTabState extends State<CommunityTab> {
             _PostCard(post: p, onTap: () => _open(p)),
             const SizedBox(height: 12),
           ],
+        if (!_loading && _err == null && _hasMore)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: SecondaryButton(
+              _loadingMore ? 'Loading...' : 'Load more',
+              onPressed: _loadingMore ? null : _loadMore,
+            ),
+          ),
       ],
     ),
   );
@@ -184,7 +215,12 @@ class _PostCard extends StatelessWidget {
                 style: AppText.body(14, FontWeight.w600, AppColors.muted),
               ),
               const Spacer(),
-              if (post.reported)
+              if (post.hidden)
+                Text(
+                  'Under review',
+                  style: AppText.body(13, FontWeight.w600, AppColors.hint),
+                )
+              else if (post.reported)
                 Text(
                   'Reported',
                   style: AppText.body(13, FontWeight.w600, AppColors.hint),

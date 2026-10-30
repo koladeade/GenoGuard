@@ -160,3 +160,15 @@ CREATE TABLE IF NOT EXISTS usage_events (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS usage_events_user ON usage_events(user_id, created_at DESC);
+
+-- Reports on individual comments. Same idea as post_reports; admins review them (no auto-hide).
+CREATE TABLE IF NOT EXISTS comment_reports (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  comment_id  uuid NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
+  reporter_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reason      text NOT NULL CHECK (reason IN ('harmful_advice', 'abuse', 'spam', 'privacy', 'other')),
+  status      text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'dismissed')),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (comment_id, reporter_id)
+);
+CREATE INDEX IF NOT EXISTS comment_reports_open ON comment_reports(status, comment_id);
