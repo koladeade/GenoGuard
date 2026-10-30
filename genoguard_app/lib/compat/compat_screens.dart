@@ -4,6 +4,7 @@ import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import 'compat_logic.dart';
+import '../core/usage.dart';
 
 /// Opens the compatibility test from anywhere in the app.
 void openCompatibility(BuildContext context) {
@@ -64,6 +65,7 @@ class _CompatibilityScreenState extends State<CompatibilityScreen> {
             'See result',
             onPressed: () {
               if (!ready) return;
+              Usage.log(context, 'compat_check');
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => CompatibilityResultScreen(

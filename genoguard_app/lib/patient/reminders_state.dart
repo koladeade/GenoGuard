@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import '../core/api.dart';
 import '../core/auth_state.dart' show errMsg;
@@ -121,9 +123,39 @@ class Reminder {
 }
 
 /// One list for medication, hydration and appointment reminders, plus the daily water counter.
-class RemindersState extends ChangeNotifier {
-  RemindersState(this.api);
+class RemindersState extends ChangeNotifier with WidgetsBindingObserver {
+  RemindersState(this.api) {
+    WidgetsBinding.instance.addObserver(this);
+    _armMidnight();
+  }
   final Api api;
+
+  Timer? _midnight;
+  String _loadedDay = ymd(DateTime.now());
+
+  void _armMidnight() {
+    _midnight?.cancel();
+    final now = DateTime.now();
+    final next = DateTime(now.year, now.month, now.day + 1, 0, 0, 2);
+    _midnight = Timer(next.difference(now), () {
+      load(silent: true);
+      _armMidnight();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    _armMidnight();
+    if (ymd(DateTime.now()) != _loadedDay) load(silent: true);
+  }
+
+  @override
+  void dispose() {
+    _midnight?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   List<Reminder> reminders = [];
   int glasses = 0;

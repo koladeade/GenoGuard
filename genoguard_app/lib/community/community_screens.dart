@@ -94,7 +94,12 @@ class GuidelinesNotice extends StatelessWidget {
 }
 
 /// Bottom sheet to pick a reason. Returns true when the report was sent.
-Future<bool> showReportSheet(BuildContext context, String postId) async {
+/// Pass [comment] = true when [id] is a comment id.
+Future<bool> showReportSheet(
+  BuildContext context,
+  String id, {
+  bool comment = false,
+}) async {
   final api = communityApi(context);
   final reason = await showModalBottomSheet<String>(
     context: context,
@@ -109,7 +114,10 @@ Future<bool> showReportSheet(BuildContext context, String postId) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Report this post', style: AppText.heading(24)),
+            Text(
+              comment ? 'Report this comment' : 'Report this post',
+              style: AppText.heading(24),
+            ),
             const SizedBox(height: 6),
             Text(
               'Why are you reporting it? An admin will review it.',
@@ -133,9 +141,18 @@ Future<bool> showReportSheet(BuildContext context, String postId) async {
   );
   if (reason == null) return false;
   try {
-    await api.report(postId, reason);
+    if (comment) {
+      await api.reportComment(id, reason);
+    } else {
+      await api.report(id, reason);
+    }
     if (context.mounted)
-      snack(context, 'Thanks. An admin will review this post.');
+      snack(
+        context,
+        comment
+            ? 'Thanks. An admin will review this comment.'
+            : 'Thanks. An admin will review this post.',
+      );
     return true;
   } catch (e) {
     if (context.mounted) snack(context, errMsg(e));
@@ -313,6 +330,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (sent && mounted) setState(() => _post?.reported = true);
   }
 
+  Future<void> _reportComment(Comment c) async {
+    final sent = await showReportSheet(context, c.id, comment: true);
+    if (sent && mounted) setState(() => c.reported = true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = _post;
@@ -405,6 +427,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                         FontWeight.w500,
                                       ).copyWith(height: 1.45),
                                     ),
+                                    if (p.hidden) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Under review: other people can\'t see this post right now.',
+                                        style: AppText.body(
+                                          14,
+                                          FontWeight.w600,
+                                          AppColors.hint,
+                                        ),
+                                      ),
+                                    ],
                                     const SizedBox(height: 12),
                                     if (p.mine)
                                       TextButton.icon(
@@ -508,6 +541,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                 ),
                                                 onPressed: () =>
                                                     _deleteComment(c),
+                                              )
+                                            else
+                                              IconButton(
+                                                visualDensity:
+                                                    VisualDensity.compact,
+                                                tooltip: c.reported
+                                                    ? 'Reported'
+                                                    : 'Report comment',
+                                                icon: Icon(
+                                                  Icons.flag_outlined,
+                                                  size: 18,
+                                                  color: c.reported
+                                                      ? AppColors.hint
+                                                      : AppColors.muted,
+                                                ),
+                                                onPressed: c.reported
+                                                    ? null
+                                                    : () => _reportComment(c),
                                               ),
                                           ],
                                         ),

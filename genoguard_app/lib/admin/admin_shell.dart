@@ -6,7 +6,8 @@ import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
-/// Admin home: the queue of reported posts. "Keep" closes the reports, "Delete" removes the post.
+/// Admin home: the queues of reported posts and reported comments.
+/// "Keep" closes the reports, "Delete" removes the post or comment.
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
 
@@ -16,6 +17,7 @@ class AdminShell extends StatefulWidget {
 
 class _AdminShellState extends State<AdminShell> {
   List<ReportedPost> _items = [];
+  List<ReportedComment> _comments = [];
   bool _loading = true;
   String? _err;
   final Set<String> _busy = {};
@@ -28,10 +30,13 @@ class _AdminShellState extends State<AdminShell> {
 
   Future<void> _load() async {
     try {
-      final r = await communityApi(context).reportedPosts();
+      final api = communityApi(context);
+      final r = await api.reportedPosts();
+      final c = await api.reportedComments();
       if (!mounted) return;
       setState(() {
         _items = r;
+        _comments = c;
         _err = null;
       });
     } catch (e) {
@@ -72,10 +77,43 @@ class _AdminShellState extends State<AdminShell> {
     }
   }
 
+  Future<void> _actComment(ReportedComment item, {required bool delete}) async {
+    if (delete) {
+      final ok = await confirmDialog(
+        context,
+        title: 'Delete this comment?',
+        message:
+            'The comment and its reports will be removed. This cannot be undone.',
+        action: 'Delete',
+      );
+      if (!ok || !mounted) return;
+    }
+    setState(() => _busy.add(item.commentId));
+    try {
+      final api = communityApi(context);
+      if (delete) {
+        await api.deleteComment(item.commentId);
+      } else {
+        await api.keepComment(item.commentId);
+      }
+      if (!mounted) return;
+      setState(
+        () => _comments = _comments
+            .where((x) => x.commentId != item.commentId)
+            .toList(),
+      );
+      snack(context, delete ? 'Comment deleted' : 'Comment kept');
+    } catch (e) {
+      if (mounted) snack(context, errMsg(e));
+    } finally {
+      if (mounted) setState(() => _busy.remove(item.commentId));
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Reported posts'),
+      title: const Text('Reported content'),
       actions: [
         IconButton(
           icon: const Icon(Icons.person_outline, color: AppColors.gold),
@@ -126,10 +164,10 @@ class _AdminShellState extends State<AdminShell> {
                         ],
                       ),
                     )
-                  else if (_items.isEmpty)
+                  else if (_items.isEmpty && _comments.isEmpty)
                     AppCard(
                       child: Text(
-                        'Nothing to review. Reported posts will appear here.',
+                        'Nothing to review. Reported posts and comments will appear here.',
                         style: AppText.body(
                           17,
                           FontWeight.w500,
@@ -137,16 +175,37 @@ class _AdminShellState extends State<AdminShell> {
                         ),
                       ),
                     )
-                  else
+                  else ...[
+                    if (_items.isNotEmpty) _heading('Posts (${_items.length})'),
                     for (final item in _items) ...[
                       _ReportCard(
-                        item: item,
+                        count: item.reportCount,
+                        meta: '${item.author} · ${timeAgo(item.postedAt)}',
+                        body: item.body,
+                        reasons: item.reasons,
                         busy: _busy.contains(item.postId),
                         onKeep: () => _act(item, delete: false),
                         onDelete: () => _act(item, delete: true),
+                        keepLabel: 'Keep post',
                       ),
                       const SizedBox(height: 14),
                     ],
+                    if (_comments.isNotEmpty)
+                      _heading('Comments (${_comments.length})'),
+                    for (final item in _comments) ...[
+                      _ReportCard(
+                        count: item.reportCount,
+                        meta: '${item.author} · ${timeAgo(item.postedAt)}',
+                        body: item.body,
+                        reasons: item.reasons,
+                        busy: _busy.contains(item.commentId),
+                        onKeep: () => _actComment(item, delete: false),
+                        onDelete: () => _actComment(item, delete: true),
+                        keepLabel: 'Keep comment',
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                  ],
                 ],
               ),
             ),
@@ -154,17 +213,30 @@ class _AdminShellState extends State<AdminShell> {
   );
 }
 
+Widget _heading(String text) => Padding(
+  padding: const EdgeInsets.fromLTRB(2, 6, 0, 10),
+  child: Text(text, style: AppText.body(15, FontWeight.w700, AppColors.muted)),
+);
+
 class _ReportCard extends StatelessWidget {
   const _ReportCard({
-    required this.item,
+    required this.count,
+    required this.meta,
+    required this.body,
+    required this.reasons,
     required this.busy,
     required this.onKeep,
     required this.onDelete,
+    required this.keepLabel,
   });
-  final ReportedPost item;
+  final int count;
+  final String meta;
+  final String body;
+  final List<String> reasons;
   final bool busy;
   final VoidCallback onKeep;
   final VoidCallback onDelete;
+  final String keepLabel;
 
   @override
   Widget build(BuildContext context) => AppCard(
@@ -180,22 +252,20 @@ class _ReportCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Text(
-                item.reportCount == 1
-                    ? '1 report'
-                    : '${item.reportCount} reports',
+                count == 1 ? '1 report' : '$count reports',
                 style: AppText.body(14, FontWeight.w700, AppColors.error),
               ),
             ),
             const Spacer(),
             Text(
-              '${item.author} · ${timeAgo(item.postedAt)}',
+              meta,
               style: AppText.body(14, FontWeight.w500, AppColors.muted),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
-          item.body,
+          body,
           style: AppText.body(17, FontWeight.w500).copyWith(height: 1.45),
         ),
         const SizedBox(height: 12),
@@ -203,7 +273,7 @@ class _ReportCard extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final r in item.reasons)
+            for (final r in reasons)
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -225,7 +295,7 @@ class _ReportCard extends StatelessWidget {
           children: [
             Expanded(
               child: SecondaryButton(
-                'Keep post',
+                keepLabel,
                 onPressed: busy ? null : onKeep,
               ),
             ),

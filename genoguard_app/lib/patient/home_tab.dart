@@ -7,6 +7,7 @@ import '../widgets/common.dart';
 import 'pain_entry_sheet.dart';
 import 'pain_state.dart';
 import 'reminder_utils.dart';
+import 'recovery.dart';
 import 'reminders_state.dart';
 import 'weather_card.dart';
 
@@ -104,6 +105,7 @@ class HomeTab extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
+          // Weather alert (only appears when conditions warrant)
           WeatherCard(location: user['location'] as String?),
 
           // Days since last crisis
@@ -111,7 +113,7 @@ class HomeTab extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Recovery
-          _RecoveryCard(pain: pain),
+          RecoveryCard(pain: pain),
           const SizedBox(height: 16),
 
           // Next reminders
@@ -235,197 +237,6 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingPainter old) => old.progress != progress;
-}
-
-// ---------------------------------------------------------------------------
-// Recovery chart
-
-class _RecoveryCard extends StatelessWidget {
-  const _RecoveryCard({required this.pain});
-  final PainState pain;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = pain.summary;
-    final hasChart = s.points.length >= 2;
-    final pct = s.changePct;
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Recovery since last crisis',
-                  style: AppText.body(19, FontWeight.w700),
-                ),
-              ),
-              if (hasChart && pct != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: pct >= 0 ? AppColors.greenTint : AppColors.redTint,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    pct >= 0 ? '↓ $pct% pain' : '↑ ${-pct}% pain',
-                    style: AppText.body(
-                      14,
-                      FontWeight.w700,
-                      pct >= 0 ? AppColors.green : AppColors.red,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _WindowToggle(value: pain.window, onChanged: pain.setWindow),
-          const SizedBox(height: 14),
-          if (hasChart) ...[
-            SizedBox(
-              height: 150,
-              width: double.infinity,
-              child: CustomPaint(painter: _ChartPainter(s.points, s.spanDays)),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Crisis',
-                  style: AppText.body(15, FontWeight.w500, AppColors.muted),
-                ),
-                if (s.spanDays >= 2)
-                  Text(
-                    'Day ${(s.spanDays / 2).round()}',
-                    style: AppText.body(15, FontWeight.w500, AppColors.muted),
-                  ),
-                Text(
-                  s.reachesToday ? 'Today' : 'Day ${s.spanDays}',
-                  style: AppText.body(15, FontWeight.w500, AppColors.muted),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Average daily pain (0 to 10) after your last crisis. Lower is better.',
-              style: AppText.body(15, FontWeight.w500, AppColors.muted),
-            ),
-          ] else
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Text(
-                s.hasCrisis
-                    ? 'Log your pain on a few days after a crisis to see your recovery here.'
-                    : 'Mark a pain entry as a crisis to start tracking your recovery.',
-                style: AppText.body(15, FontWeight.w500, AppColors.muted),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WindowToggle extends StatelessWidget {
-  const _WindowToggle({required this.value, required this.onChanged});
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 56,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.border, width: 1.2),
-    ),
-    child: Row(
-      children: [
-        for (final d in const [7, 14, 30])
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onChanged(d),
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: d == value ? AppColors.surfaceAlt : Colors.transparent,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Text(
-                  '$d days',
-                  style: AppText.body(
-                    16,
-                    FontWeight.w700,
-                    d == value ? AppColors.text : AppColors.muted,
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
-}
-
-class _ChartPainter extends CustomPainter {
-  _ChartPainter(this.points, this.span);
-  final List<RecoveryPoint> points;
-  final int span;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const padX = 10.0, padY = 12.0;
-    final w = size.width - padX * 2;
-    final h = size.height - padY * 2;
-
-    final grid = Paint()
-      ..color = AppColors.border
-      ..strokeWidth = 1;
-    for (var i = 0; i < 3; i++) {
-      final y = padY + h * i / 2;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
-    }
-
-    Offset at(RecoveryPoint p) {
-      final x = padX + (span == 0 ? w / 2 : w * p.day / span);
-      final y = padY + h * (1 - p.avg / 10);
-      return Offset(x, y);
-    }
-
-    final pts = points.map(at).toList();
-    final line = Path()..moveTo(pts.first.dx, pts.first.dy);
-    for (final p in pts.skip(1)) {
-      line.lineTo(p.dx, p.dy);
-    }
-    final fill = Path.from(line)
-      ..lineTo(pts.last.dx, padY + h)
-      ..lineTo(pts.first.dx, padY + h)
-      ..close();
-
-    canvas.drawPath(fill, Paint()..color = const Color(0x2E63A68A));
-    canvas.drawPath(
-      line,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.2
-        ..strokeJoin = StrokeJoin.round
-        ..strokeCap = StrokeCap.round
-        ..color = AppColors.green,
-    );
-    canvas.drawCircle(pts.first, 7, Paint()..color = AppColors.red);
-    canvas.drawCircle(pts.last, 7, Paint()..color = AppColors.green);
-  }
-
-  @override
-  bool shouldRepaint(_ChartPainter old) =>
-      old.points != points || old.span != span;
 }
 
 // ---------------------------------------------------------------------------

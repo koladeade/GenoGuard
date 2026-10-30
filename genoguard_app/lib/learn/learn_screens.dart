@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
+import '../core/usage.dart';
 import '../explorer/learn_tab.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
@@ -31,12 +32,14 @@ void openLearn(BuildContext context) {
 }
 
 void openArticle(BuildContext context, Article a) {
+  Usage.log(context, 'learning_open', item: a.id);
   Navigator.of(
     context,
   ).push(MaterialPageRoute<void>(builder: (_) => ArticleScreen(article: a)));
 }
 
 void openQuiz(BuildContext context) {
+  Usage.log(context, 'learning_open', item: 'quiz');
   Navigator.of(
     context,
   ).push(MaterialPageRoute<void>(builder: (_) => const QuizScreen()));

@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 import '../widgets/nav_row.dart';
 import 'match_api.dart';
+import '../core/usage.dart';
 
 /// Opens Match by QR from anywhere in the app.
 void openMatchByQr(BuildContext context) {
@@ -26,6 +27,7 @@ MatchApi _api(BuildContext context) =>
 void _showResult(BuildContext context, ShareStatus s) {
   final you = s.you, partner = s.partner;
   if (you == null || partner == null) return;
+  Usage.log(context, 'qr_match');
   Navigator.of(context).pushReplacement(
     MaterialPageRoute<void>(
       builder: (_) => CompatibilityResultScreen(
