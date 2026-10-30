@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
     "migrate": "node src/migrate.js",
-    "seed-admin": "node src/seed-admin.js"
+    "seed-admin": "node src/seed-admin.js",
+    "test": "node tests/community.test.js && node tests/community-paging-reports.test.js && node tests/invites.test.js && node tests/admin.test.js"
   },
   "keywords": [],
   "author": "",
@@ -26,5 +26,8 @@
     "nodemailer": "^10.1.0",
     "pg": "^8.23.1",
     "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "pg-mem": "^3.0.14"
   }
 }
