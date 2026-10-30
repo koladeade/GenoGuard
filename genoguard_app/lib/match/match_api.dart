@@ -37,6 +37,27 @@ class ShareStatus {
   );
 }
 
+/// One emailed invitation, as the sender or the receiver sees it.
+class InviteItem {
+  const InviteItem({
+    required this.id,
+    required this.status,
+    this.email,
+    this.otherName,
+  });
+  final String id;
+  final String status; // open | requested | approved | declined | expired
+  final String? email; // sender's list only
+  final String? otherName; // first name of the other person, once known
+
+  factory InviteItem.fromJson(Map<String, dynamic> j) => InviteItem(
+    id: j['id'] as String,
+    status: j['status'] as String,
+    email: j['email'] as String?,
+    otherName: j['other_name'] as String?,
+  );
+}
+
 /// Thin wrapper over the /qr endpoints. Errors are thrown as DioException; show them with errMsg().
 class MatchApi {
   MatchApi(this.dio);
@@ -67,4 +88,22 @@ class MatchApi {
 
   Future<void> decide(String id, bool allow) =>
       dio.post('/qr/shares/$id/decision', data: {'allow': allow});
+
+  // Email invitations (for someone who is not next to you)
+
+  Future<void> invite(String email) =>
+      dio.post('/qr/invites', data: {'email': email});
+
+  Future<({List<InviteItem> sent, List<InviteItem> received})> invites() async {
+    final r = await dio.get('/qr/invites');
+    List<InviteItem> parse(dynamic v) => ((v as List?) ?? const [])
+        .map((e) => InviteItem.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+    return (sent: parse(r.data['sent']), received: parse(r.data['received']));
+  }
+
+  Future<void> cancelInvite(String id) => dio.delete('/qr/invites/$id');
+
+  /// Removes a finished (expired or declined) invitation from your own list.
+  Future<void> removeInvite(String id) => dio.post('/qr/invites/$id/remove');
 }
