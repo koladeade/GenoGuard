@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../community/community_api.dart';
 import '../community/community_screens.dart';
 import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/bottom_nav.dart';
 import '../widgets/common.dart';
+import 'admin_api.dart';
+import 'data_tab.dart';
+import 'overview_tab.dart';
+import 'users_tab.dart';
 
-/// Admin home: the queues of reported posts and reported comments.
-/// "Keep" closes the reports, "Delete" removes the post or comment.
+AdminApi adminApi(BuildContext context) =>
+    AdminApi(context.read<AuthState>().api.dio);
+
+/// Admin home: Overview, Reports, Users and Data.
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
 
@@ -16,6 +23,63 @@ class AdminShell extends StatefulWidget {
 }
 
 class _AdminShellState extends State<AdminShell> {
+  int _tab = 0;
+  int _overviewTick =
+      0; // bumped whenever Overview is opened so its numbers are fresh
+
+  static const _items = [
+    (Icons.dashboard_outlined, 'Overview'),
+    (Icons.flag_outlined, 'Reports'),
+    (Icons.people_outline, 'Users'),
+    (Icons.insights_outlined, 'Data'),
+  ];
+  static const _titles = [
+    'Overview',
+    'Reported content',
+    'Users',
+    'Research data',
+  ];
+
+  void _go(int i) => setState(() {
+    _tab = i;
+    if (i == 0) _overviewTick++;
+  });
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: Text(_titles[_tab]),
+      actions: [
+        IconButton(
+          tooltip: 'Log out',
+          icon: const Icon(Icons.logout, color: AppColors.gold),
+          onPressed: () => context.read<AuthState>().logout(),
+        ),
+      ],
+    ),
+    body: SafeArea(
+      child: IndexedStack(
+        index: _tab,
+        children: [
+          OverviewTab(tick: _overviewTick, onGoToReports: () => _go(1)),
+          const ReportsTab(),
+          const UsersTab(),
+          const DataTab(),
+        ],
+      ),
+    ),
+    bottomNavigationBar: AppBottomNav(items: _items, index: _tab, onTap: _go),
+  );
+}
+
+class ReportsTab extends StatefulWidget {
+  const ReportsTab({super.key});
+
+  @override
+  State<ReportsTab> createState() => _ReportsTabState();
+}
+
+class _ReportsTabState extends State<ReportsTab> {
   List<ReportedPost> _items = [];
   List<ReportedComment> _comments = [];
   bool _loading = true;
@@ -111,106 +175,87 @@ class _AdminShellState extends State<AdminShell> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Reported content'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.person_outline, color: AppColors.gold),
-          onPressed: () => context.go('/profile'),
-        ),
-      ],
-    ),
-    body: SafeArea(
-      child: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            )
-          : RefreshIndicator(
-              color: AppColors.gold,
-              backgroundColor: AppColors.surface,
-              onRefresh: _load,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                children: [
-                  if (_err != null)
-                    AppCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _err!,
-                            style: AppText.body(
-                              15,
-                              FontWeight.w600,
-                              AppColors.error,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() => _loading = true);
-                              _load();
-                            },
-                            child: Text(
-                              'Try again',
-                              style: AppText.body(
-                                16,
-                                FontWeight.w700,
-                                AppColors.gold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (_items.isEmpty && _comments.isEmpty)
-                    AppCard(
-                      child: Text(
-                        'Nothing to review. Reported posts and comments will appear here.',
+  Widget build(BuildContext context) => _loading
+      ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+      : RefreshIndicator(
+          color: AppColors.gold,
+          backgroundColor: AppColors.surface,
+          onRefresh: _load,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            children: [
+              if (_err != null)
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _err!,
                         style: AppText.body(
-                          17,
-                          FontWeight.w500,
-                          AppColors.muted,
+                          15,
+                          FontWeight.w600,
+                          AppColors.error,
                         ),
                       ),
-                    )
-                  else ...[
-                    if (_items.isNotEmpty) _heading('Posts (${_items.length})'),
-                    for (final item in _items) ...[
-                      _ReportCard(
-                        count: item.reportCount,
-                        meta: '${item.author} · ${timeAgo(item.postedAt)}',
-                        body: item.body,
-                        reasons: item.reasons,
-                        busy: _busy.contains(item.postId),
-                        onKeep: () => _act(item, delete: false),
-                        onDelete: () => _act(item, delete: true),
-                        keepLabel: 'Keep post',
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _loading = true);
+                          _load();
+                        },
+                        child: Text(
+                          'Try again',
+                          style: AppText.body(
+                            16,
+                            FontWeight.w700,
+                            AppColors.gold,
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 14),
                     ],
-                    if (_comments.isNotEmpty)
-                      _heading('Comments (${_comments.length})'),
-                    for (final item in _comments) ...[
-                      _ReportCard(
-                        count: item.reportCount,
-                        meta: '${item.author} · ${timeAgo(item.postedAt)}',
-                        body: item.body,
-                        reasons: item.reasons,
-                        busy: _busy.contains(item.commentId),
-                        onKeep: () => _actComment(item, delete: false),
-                        onDelete: () => _actComment(item, delete: true),
-                        keepLabel: 'Keep comment',
-                      ),
-                      const SizedBox(height: 14),
-                    ],
-                  ],
+                  ),
+                )
+              else if (_items.isEmpty && _comments.isEmpty)
+                AppCard(
+                  child: Text(
+                    'Nothing to review. Reported posts and comments will appear here.',
+                    style: AppText.body(17, FontWeight.w500, AppColors.muted),
+                  ),
+                )
+              else ...[
+                if (_items.isNotEmpty) _heading('Posts (${_items.length})'),
+                for (final item in _items) ...[
+                  _ReportCard(
+                    count: item.reportCount,
+                    meta: '${item.author} · ${timeAgo(item.postedAt)}',
+                    body: item.body,
+                    reasons: item.reasons,
+                    busy: _busy.contains(item.postId),
+                    onKeep: () => _act(item, delete: false),
+                    onDelete: () => _act(item, delete: true),
+                    keepLabel: 'Keep post',
+                  ),
+                  const SizedBox(height: 14),
                 ],
-              ),
-            ),
-    ),
-  );
+                if (_comments.isNotEmpty)
+                  _heading('Comments (${_comments.length})'),
+                for (final item in _comments) ...[
+                  _ReportCard(
+                    count: item.reportCount,
+                    meta: '${item.author} · ${timeAgo(item.postedAt)}',
+                    body: item.body,
+                    reasons: item.reasons,
+                    busy: _busy.contains(item.commentId),
+                    onKeep: () => _actComment(item, delete: false),
+                    onDelete: () => _actComment(item, delete: true),
+                    keepLabel: 'Keep comment',
+                  ),
+                  const SizedBox(height: 14),
+                ],
+              ],
+            ],
+          ),
+        );
 }
 
 Widget _heading(String text) => Padding(
