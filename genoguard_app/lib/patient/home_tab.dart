@@ -43,7 +43,7 @@ class HomeTab extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         children: [
-          // Greeting + avatar
+          // Greeting
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

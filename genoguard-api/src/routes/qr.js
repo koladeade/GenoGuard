@@ -6,9 +6,7 @@ const db = require('../db');
 const { requireAuth, requireRole } = require('../auth');
 const { sendMatchInvite } = require('../mail');
 
-// Match by QR, and by email invite for someone who is not next to you. Person A creates a code (QR or
-// typed) or invites an email address. Person B claims it. A must approve every share before either side
-// sees a genotype.
+// Match by QR, and by email invite for someone who is not next to you. 
 router.use(requireAuth, requireRole('patient', 'explorer'));
 
 const CODE_TTL_MINUTES = 5; // how long a code lives
@@ -48,7 +46,7 @@ router.post('/shares', async (req, res) => {
   res.status(201).json({ id: rows[0].id, code, expires_in: CODE_TTL_MINUTES * 60 });
 });
 
-// B: claim a code (scanned or typed). Throttled so codes cannot be guessed.
+// B: claim a code (scanned or typed).
 const claimLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 10,
@@ -81,7 +79,7 @@ router.post('/claim', claimLimiter, async (req, res) => {
   res.json({ id: rows[0].id, other_name: firstName(owner.rows[0]?.full_name) });
 });
 
-// Both sides poll this. Genotypes are only included once the owner approved.
+//Genotypes are only included once the owner approved.
 router.get('/shares/:id', async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(400).json({ error: 'Invalid id' });
   const { rows } = await db.query(
@@ -141,7 +139,7 @@ const inviteLimiter = rateLimit({
   message: { error: 'You have sent several invitations. Please try again later.' },
 });
 
-// A: invite an email address. The reply never says whether that address has an account.
+// A: invite an email address.
 router.post('/invites', inviteLimiter, async (req, res) => {
   const p = z.object({ email: z.string().trim().toLowerCase().email().max(254) }).safeParse(req.body);
   if (!p.success) return res.status(400).json({ error: 'Enter a valid email address' });
@@ -188,7 +186,7 @@ const liveStatus = (s, now) => {
   return s.status;
 };
 
-// Both lists for the signed-in person: invitations they sent and invitations they accepted.
+
 router.get('/invites', async (req, res) => {
   const now = Date.now();
   const since = new Date(now - 14 * 24 * 3600 * 1000);
@@ -224,7 +222,7 @@ router.get('/invites', async (req, res) => {
   });
 });
 
-// Either person: remove a finished (expired or declined) invitation from their own list.
+
 router.post('/invites/:id/remove', async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(400).json({ error: 'Invalid id' });
   const { rows } = await db.query(
@@ -245,7 +243,7 @@ router.post('/invites/:id/remove', async (req, res) => {
   res.json({ ok: true });
 });
 
-// A: cancel an invitation that has not been decided yet.
+
 router.delete('/invites/:id', async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(400).json({ error: 'Invalid id' });
   const { rowCount } = await db.query(

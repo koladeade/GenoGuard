@@ -3,7 +3,7 @@ const { z } = require('zod');
 const db = require('../db');
 const { requireAuth, requireRole } = require('../auth');
 
-// Patients only. Every query is scoped to req.user.id.
+
 router.use(requireAuth, requireRole('patient'));
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,7 +45,7 @@ const bodySchema = z.object({
   on_date: z.string().optional().nullable(),
 });
 
-// Returns { error } or { row } with the cross-field rules applied.
+
 function parseReminder(body) {
   const p = bodySchema.safeParse(body);
   if (!p.success) return { error: p.error.issues[0]?.message || 'Invalid reminder' };
@@ -70,7 +70,7 @@ function parseReminder(body) {
   };
 }
 
-// GET /reminders?day=YYYY-MM-DD -> reminders + how many times each was logged that day
+
 router.get('/', async (req, res) => {
   const day = req.query.day;
   if (!validDay(day)) return res.status(400).json({ error: 'day must be YYYY-MM-DD' });
@@ -98,7 +98,7 @@ router.post('/', async (req, res) => {
   res.status(201).json({ id: rows[0].id });
 });
 
-// Water counter. Registered before /:id so "water" is not read as an id.
+
 router.get('/water', async (req, res) => {
   if (!validDay(req.query.day)) return res.status(400).json({ error: 'day must be YYYY-MM-DD' });
   const { rows } = await db.query('SELECT glasses FROM water_intake WHERE user_id = $1 AND day = $2::date', [
@@ -157,7 +157,7 @@ router.delete('/:id', idGuard, async (req, res) => {
   res.status(204).end();
 });
 
-// Mark taken for a day (once per day per reminder).
+
 router.post('/:id/log', idGuard, async (req, res) => {
   if (!validDay(req.body?.day)) return res.status(400).json({ error: 'day must be YYYY-MM-DD' });
   const found = await db.query('SELECT recurrence FROM reminders WHERE id=$1 AND user_id=$2', [
@@ -176,7 +176,7 @@ router.post('/:id/log', idGuard, async (req, res) => {
   res.status(201).end();
 });
 
-// Undo: clears that day's logs for the reminder.
+
 router.delete('/:id/log', idGuard, async (req, res) => {
   if (!validDay(req.query.day)) return res.status(400).json({ error: 'day must be YYYY-MM-DD' });
   await db.query('DELETE FROM reminder_logs WHERE reminder_id=$1 AND user_id=$2 AND day=$3::date', [

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import 'password_strength.dart';
 
-/// Rounded gold square with an icon (logo / section badge).
+/// Logo bar
 class IconBadge extends StatelessWidget {
   const IconBadge({super.key, required this.icon, this.size = 96});
   final IconData icon;
@@ -115,7 +115,6 @@ class SecondaryButton extends StatelessWidget {
   );
 }
 
-/// Google's four-colour "G" mark, drawn unmodified (do not recolour, stretch or crop it).
 const _googleGSvg = '''
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -124,7 +123,7 @@ const _googleGSvg = '''
 <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
 </svg>''';
 
-/// "Continue with Google" / "Sign up with Google". Uses Google's official "G" mark.
+/// "Continue with Google" / "Sign up with Google".
 class GoogleButton extends StatelessWidget {
   const GoogleButton({
     super.key,
@@ -197,7 +196,6 @@ class ErrorText extends StatelessWidget {
         );
 }
 
-/// Label above a filled field; optional "Show / Hide" pill for passwords.
 class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,
@@ -306,7 +304,6 @@ class _AppTextFieldState extends State<AppTextField> {
   }
 }
 
-/// Two-option Yes / No selector. Nothing is selected until the user taps.
 class YesNoToggle extends StatelessWidget {
   const YesNoToggle({super.key, required this.value, required this.onChanged});
   final bool? value;
@@ -350,7 +347,6 @@ class YesNoToggle extends StatelessWidget {
   );
 }
 
-/// Screen with a "< Back" link, serif title, optional subtitle, then the children.
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
     super.key,

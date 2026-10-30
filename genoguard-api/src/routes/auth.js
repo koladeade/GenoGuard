@@ -107,11 +107,6 @@ router.post('/login', async (req, res) => {
 });
 
 // ---- Google sign-in -------------------------------------------------------
-// The app sends the Google ID token. We verify it here (signature + audience), never trust the app.
-//  1. Known Google account            -> log in
-//  2. Existing email (Google-verified) -> link the Google account, log in
-//  3. New user, no profile yet         -> { status: 'needs_profile' } so the app shows consent + SCD question
-//  4. New user with profile + consent  -> create account
 const googleClient = new OAuth2Client();
 const googleAudiences = () =>
   (process.env.GOOGLE_CLIENT_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -184,7 +179,6 @@ router.post('/google', async (req, res) => {
   res.status(201).json(await issueTokens(rows[0]));
 });
 
-// Rotating refresh tokens. Re-using an already-rotated token revokes every session for that user.
 router.post('/refresh', async (req, res) => {
   const d = parse(z.object({ refresh_token: z.string().min(10) }), req.body, res);
   if (!d) return;
@@ -210,7 +204,7 @@ router.post('/logout', async (req, res) => {
   res.status(204).end();
 });
 
-// Always answers 200 so the endpoint can't be used to find out which emails are registered.
+
 router.post('/forgot-password', async (req, res) => {
   const d = parse(z.object({ email }), req.body, res);
   if (!d) return;

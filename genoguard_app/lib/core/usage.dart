@@ -6,7 +6,7 @@ import 'auth_state.dart';
 /// Records a usage event, but only when the signed-in user has switched usage logs on.
 /// The API checks the consent again on every call, so nothing is stored without it.
 /// Events are names only (never what the user typed or any health data):
-///   compat_check, qr_match, learning_open (+ item: an article id or 'quiz').
+///   compat_check, qr_match, learning_open
 class Usage {
   static void log(BuildContext context, String event, {String? item}) {
     try {

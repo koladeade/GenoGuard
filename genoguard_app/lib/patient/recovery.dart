@@ -273,7 +273,7 @@ class RecoveryCard extends StatelessWidget {
   }
 }
 
-/// One dot per log, joined in time order. Gaps stay empty. The dotted line is the recovery level.
+/// One dot per log, joined in time order.
 class _LogsPainter extends CustomPainter {
   _LogsPainter(this.points, this.threshold);
   final List<PainEntry> points;

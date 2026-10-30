@@ -38,7 +38,7 @@ void _showResult(BuildContext context, ShareStatus s) {
   );
 }
 
-/// Opens the result for an approved share from a list (keeps the list underneath).
+/// Opens the result for an approved share from a list
 Future<void> _openApproved(BuildContext context, String shareId) async {
   try {
     final s = await _api(context).status(shareId);
@@ -76,7 +76,6 @@ Future<void> _openApproved(BuildContext context, String shareId) async {
 }
 
 // ---------------------------------------------------------------------------
-// Hub
 
 class MatchByQrScreen extends StatelessWidget {
   const MatchByQrScreen({super.key});
@@ -393,8 +392,6 @@ class ScanCodeScreen extends StatefulWidget {
 
 class _ScanCodeScreenState extends State<ScanCodeScreen> {
   late final MatchApi _api0 = _api(context);
-  // The iOS simulator has no camera and the scanner can crash there, so the camera is opt-in
-  // and not offered on simulators.
   late final bool _hasCamera =
       !(Platform.isIOS &&
           Platform.environment.containsKey('SIMULATOR_DEVICE_NAME'));
@@ -634,7 +631,6 @@ class _InviteScreenState extends State<InviteScreen> {
   void initState() {
     super.initState();
     _load();
-    // Someone may accept while this screen is open.
     _refresh = Timer.periodic(const Duration(seconds: 20), (_) => _load());
   }
 

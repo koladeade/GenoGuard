@@ -5,8 +5,7 @@ import '../widgets/common.dart';
 import 'format.dart';
 import 'pain_state.dart';
 
-/// Opens the "New pain entry" bottom sheet. [state] is passed in because the sheet lives on the
-/// root navigator, outside the patient shell's provider.
+/// Opens the "New pain entry" bottom sheet.
 Future<void> showPainEntrySheet(
   BuildContext context,
   PainState state, {

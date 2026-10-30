@@ -47,7 +47,6 @@ class AuditEntry {
   );
 }
 
-/// Thin wrapper over the /admin endpoints. Errors are thrown as DioException; show them with errMsg().
 class AdminApi {
   AdminApi(this.dio);
   final Dio dio;
@@ -82,7 +81,7 @@ class AdminApi {
         (await dio.get('/admin/research/summary')).data as Map,
       );
 
-  /// kind: 'quiz' or 'usage'. Returns the CSV text.
+  /// 'quiz' or 'usage'. Returns the CSV text.
   Future<String> exportCsv(String kind) async {
     final r = await dio.get<String>(
       '/admin/research/export',

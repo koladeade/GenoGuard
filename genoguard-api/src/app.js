@@ -11,7 +11,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'change-me') {
 }
 
 const app = express();
-app.set('trust proxy', 1); // Render sits behind a proxy
+app.set('trust proxy', 1); 
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10kb' }));
@@ -29,7 +29,7 @@ app.use('/community', require('./routes/community'));
 app.use('/admin', require('./routes/admin'));
 app.use('/usage', require('./routes/usage'));
 
-// Example role-guarded routes; the moderation and patient features hang off these later.
+
 app.get('/admin/ping', requireAuth, requireRole('admin'), (_req, res) => res.json({ ok: true }));
 app.get('/patient/ping', requireAuth, requireRole('patient'), (_req, res) => res.json({ ok: true }));
 

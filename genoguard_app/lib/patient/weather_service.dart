@@ -79,7 +79,6 @@ class WeatherService {
   double? _first(dynamic list) =>
       (list is List && list.isNotEmpty) ? _num(list.first) : null;
 
-  /// "Ikeja, Lagos" → tries "Ikeja", then "Lagos". Prefers a Nigerian match.
   Future<({double lat, double lon, String name})?> _geocode(
     String location,
   ) async {
@@ -137,7 +136,6 @@ class WeatherService {
     };
   }
 
-  /// Dust and PM10 (µg/m³). Optional: failure just means no dust reading.
   Future<Map<String, double?>?> _air(double lat, double lon) async {
     try {
       final res = await _dio.get(

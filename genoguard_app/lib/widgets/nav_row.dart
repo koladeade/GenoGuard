@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'common.dart';
 
-/// Card row with a gold icon tile, a title, a subtitle and a chevron.
 class NavRow extends StatelessWidget {
   const NavRow({
     super.key,

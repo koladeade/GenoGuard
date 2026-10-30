@@ -1,6 +1,6 @@
 const db = require('./db');
 
-// Records an admin action. Never throws: a failed log line must not undo or block the action itself.
+
 async function audit(req, action, detail) {
   try {
     const first = String(req.user.full_name || '').trim().split(/\s+/)[0] || 'Admin';
@@ -15,7 +15,7 @@ async function audit(req, action, detail) {
   }
 }
 
-// A short label for a user that carries no personal data, e.g. "patient 3fa85f64".
+
 const userLabel = (u) => `${u.role} ${String(u.id).slice(0, 8)}`;
 
 module.exports = { audit, userLabel };

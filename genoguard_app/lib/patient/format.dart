@@ -45,19 +45,15 @@ String two(int n) => n.toString().padLeft(2, '0');
 
 String monthFull(int month) => _monthsFull[month - 1];
 
-/// "Wed 7 Oct · 09:15"
 String entryTitle(DateTime d) =>
     '${_weekdays[d.weekday - 1]} ${d.day} ${_monthsShort[d.month - 1]} · ${two(d.hour)}:${two(d.minute)}';
 
-/// "THU 8 OCT"
 String dayLabel(DateTime d) =>
     '${_weekdays[d.weekday - 1]} ${d.day} ${_monthsShort[d.month - 1]}'
         .toUpperCase();
 
-/// "08/10/2026"
 String dateField(DateTime d) => '${two(d.day)}/${two(d.month)}/${d.year}';
 
-/// "09:00 AM"
 String timeField(TimeOfDay t) {
   final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
   return '${two(h)}:${two(t.minute)} ${t.period == DayPeriod.am ? 'AM' : 'PM'}';

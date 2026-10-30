@@ -7,8 +7,7 @@ import 'pill_tabs.dart';
 import 'reminder_utils.dart';
 import 'reminders_state.dart';
 
-/// "New reminder" / "Edit reminder" sheet. [state] is passed in because the sheet lives on the root
-/// navigator, outside the patient shell's provider. [type] pre-selects the type (from the filter chip).
+/// "New reminder" / "Edit reminder" sheet.
 Future<void> showReminderSheet(
   BuildContext context,
   RemindersState state, {

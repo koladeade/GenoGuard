@@ -188,7 +188,7 @@ class AuthState extends ChangeNotifier {
       },
     );
     user = Map<String, dynamic>.from(r.data['user']);
-    notifyListeners(); // role may have changed; the router re-evaluates
+    notifyListeners();
   }
 
   Future<void> setUsageLogs(bool on) async {

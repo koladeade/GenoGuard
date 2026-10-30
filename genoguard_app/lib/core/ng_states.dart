@@ -1,4 +1,4 @@
-/// Nigerian states (plus the FCT) and the city used to look up their weather.
+/// Nigerian states and the city used to look up their weather.
 /// The profile stores the state name; weather uses the city.
 const Map<String, String> kNgStateCities = {
   'Abia': 'Umuahia',
@@ -43,8 +43,6 @@ const Map<String, String> kNgStateCities = {
 final List<String> kNgStateNames = kNgStateCities.keys.toList();
 
 /// Turns a saved location into a place name the weather lookup understands.
-/// "Kano" -> "Kano", "Plateau" -> "Jos", "FCT" -> "Abuja". Anything else is
-/// returned unchanged (free text such as "Ikeja" still works).
 String weatherPlaceFor(String text) {
   final t = text.trim().toLowerCase();
   if (t == 'fct' || t == 'abuja (fct)') return 'Abuja';

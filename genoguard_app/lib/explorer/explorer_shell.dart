@@ -5,7 +5,7 @@ import 'community_tab.dart';
 import 'explorer_home.dart';
 import 'learn_tab.dart';
 
-/// Signed-in area for people who do not live with sickle cell (role = explorer).
+/// Signed-in page for people who do not live with sickle cell (role = explorer).
 class ExplorerShell extends StatefulWidget {
   const ExplorerShell({super.key});
   @override

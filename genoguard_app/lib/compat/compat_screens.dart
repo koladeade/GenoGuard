@@ -145,7 +145,7 @@ class _Picker extends StatelessWidget {
 class CompatibilityResultScreen extends StatelessWidget {
   const CompatibilityResultScreen({super.key, required this.result, this.note});
   final CompatResult result;
-  final String? note; // e.g. where the genotypes came from
+  final String? note;
 
   @override
   Widget build(BuildContext context) => AuthScaffold(

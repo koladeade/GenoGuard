@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// GenoGuard mark: a gold shield (protection) holding a DNA helix (genotype).
+/// GenoGuard logo
 class GenoLogo extends StatelessWidget {
   const GenoLogo({super.key, this.width = 96});
   final double width;

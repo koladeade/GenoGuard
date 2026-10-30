@@ -13,7 +13,7 @@ class OverviewTab extends StatefulWidget {
     required this.tick,
     required this.onGoToReports,
   });
-  final int tick; // changes whenever the tab is opened, so the numbers refresh
+  final int tick;
   final VoidCallback onGoToReports;
 
   @override

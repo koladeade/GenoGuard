@@ -44,7 +44,7 @@ class _PatientShellState extends State<PatientShell> {
 
   void _go(int i) {
     setState(() => _tab = i);
-    // Refresh "today" (taken ticks, water) whenever the user lands on Home or Reminders.
+    // Refresh water intake "today" whenever the user lands on Home or Reminders.
     if (i == 0 || i == 2) _reminders.load(silent: true);
   }
 

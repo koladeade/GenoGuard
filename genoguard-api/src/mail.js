@@ -1,7 +1,4 @@
-// Sends the password-reset code, welcome emails and match invitations. Picks the first transport that is configured:
-//   1. BREVO_API_KEY  -> Brevo HTTPS API (works locally and on Render, no domain needed)
-//   2. SMTP_HOST      -> any SMTP server (e.g. Gmail with an app password; local use only on Render's free tier)
-//   3. neither        -> prints the code in the API terminal (development)
+
 const nodemailer = require('nodemailer');
 
 const FROM_EMAIL = process.env.MAIL_FROM_EMAIL || '';
@@ -91,7 +88,7 @@ async function sendResetCode(to, code) {
   if (!(await deliver(to, subject, text, html))) console.log(`\n[dev] Password reset code for ${to}: ${code}\n`);
 }
 
-// Invitation to compare genotypes. Says nothing about anyone's health or genotype.
+// Invitation to compare genotypes.
 async function sendMatchInvite(to, inviterName, code, days) {
   const who = esc(inviterName);
   const pretty = `${code.slice(0, 4)} ${code.slice(4)}`;

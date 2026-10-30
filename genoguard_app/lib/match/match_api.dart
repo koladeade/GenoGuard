@@ -10,7 +10,6 @@ class CodeInfo {
   final String code; // 8 characters
   final int expiresIn; // seconds
 
-  /// "K7M2 QX9P"
   String get pretty => '${code.substring(0, 4)} ${code.substring(4)}';
 
   /// What the QR contains. Only the code, never a name or genotype.
@@ -58,7 +57,6 @@ class InviteItem {
   );
 }
 
-/// Thin wrapper over the /qr endpoints. Errors are thrown as DioException; show them with errMsg().
 class MatchApi {
   MatchApi(this.dio);
   final Dio dio;

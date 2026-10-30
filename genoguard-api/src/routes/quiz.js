@@ -3,7 +3,7 @@ const { z } = require('zod');
 const db = require('../db');
 const { requireAuth, requireRole } = require('../auth');
 
-// Knowledge quiz. Patients and explorers can submit; every query is scoped to the signed-in user.
+// Knowledge quiz. Patients and explorers can submit
 router.use(requireAuth, requireRole('patient', 'explorer'));
 
 const schema = z.object({
@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
   res.status(201).json({ response: shape(rows[0]) });
 });
 
-// The signed-in user's most recent submission (or null).
+
 router.get('/latest', async (req, res) => {
   const { rows } = await db.query(
     `SELECT * FROM quiz_responses WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,

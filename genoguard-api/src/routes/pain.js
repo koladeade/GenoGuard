@@ -5,7 +5,7 @@ const { requireAuth, requireRole } = require('../auth');
 
 const AREAS = ['Back', 'Chest', 'Legs', 'Arms', 'Abdomen', 'Joints', 'Head'];
 
-// Patients only. Every query is scoped to req.user.id, so nobody can read another user's log.
+// Patients only.
 router.use(requireAuth, requireRole('patient'));
 
 const shape = (r) => ({
@@ -64,7 +64,6 @@ router.post('/', async (req, res) => {
 });
 
 // ---- Home-screen numbers ----------------------------------------------------
-// "Days" are calendar days in the user's own time zone. The app sends tz_offset (minutes east of UTC).
 const dayDiff = (a, b) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86400000);
 const addDays = (day, n) => new Date(Date.parse(`${day}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
@@ -99,7 +98,7 @@ router.get('/summary', async (req, res) => {
   let best = since;
   for (let i = 1; i < crises.length; i++) best = Math.max(best, dayDiff(crises[i], crises[i - 1]));
 
-  // Recovery = daily average pain over the first `days` days after the latest crisis (capped at today).
+  // Recovery = daily average pain over the first `days` days after the latest crisis.
   const span = Math.min(days, since);
   const rows = (
     await db.query(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Strength bar plus a checklist of what makes a password strong. Updates as the user types.
+/// Strength bar plus a checklist of what makes a password strong.
 class PasswordStrength extends StatelessWidget {
   const PasswordStrength({super.key, required this.controller});
   final TextEditingController controller;

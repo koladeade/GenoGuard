@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/nav_row.dart';
-import '../widgets/soon.dart';
 import '../compat/compat_screens.dart';
 import '../match/match_screens.dart';
 

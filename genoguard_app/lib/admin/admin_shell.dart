@@ -24,8 +24,7 @@ class AdminShell extends StatefulWidget {
 
 class _AdminShellState extends State<AdminShell> {
   int _tab = 0;
-  int _overviewTick =
-      0; // bumped whenever Overview is opened so its numbers are fresh
+  int _overviewTick = 0;
 
   static const _items = [
     (Icons.dashboard_outlined, 'Overview'),

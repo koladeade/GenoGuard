@@ -1,4 +1,3 @@
-// Admins can't self-register. Run once: ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run seed-admin
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const db = require('./db');

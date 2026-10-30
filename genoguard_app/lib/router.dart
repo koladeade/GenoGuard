@@ -20,8 +20,7 @@ String homeFor(String? role) => switch (role) {
   _ => '/explorer',
 };
 
-/// Single place where role routing happens. The role comes from the server (/me),
-/// never from decoding the JWT on the device, and the API enforces it again per request.
+/// Single place where role routing happens.
 GoRouter buildRouter(AuthState auth) => GoRouter(
   initialLocation: '/splash',
   refreshListenable: auth,

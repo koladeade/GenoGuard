@@ -8,7 +8,7 @@ import '../widgets/common.dart';
 import 'admin_api.dart';
 import 'admin_shell.dart' show adminApi;
 
-/// Account basics only: name, email, role, joined, status. Never genotype, pain logs or reminders.
+/// Account information except genotype, pain logs or reminders.
 class UsersTab extends StatefulWidget {
   const UsersTab({super.key});
   @override

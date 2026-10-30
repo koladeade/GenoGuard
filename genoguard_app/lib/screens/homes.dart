@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 
-/// Placeholder landing page per role; the real patient tabs, explore flow and
-/// admin moderation queue replace these.
 class HomeShell extends StatelessWidget {
   const HomeShell({super.key, required this.title});
   final String title;

@@ -18,7 +18,6 @@ TimeOfDay parseHhmm(String s) {
   return TimeOfDay(hour: int.parse(p[0]), minute: int.parse(p[1]));
 }
 
-/// "20:00" -> "8:00 PM"
 String label12(String hhmm) {
   final t = parseHhmm(hhmm);
   final h = t.hour % 12 == 0 ? 12 : t.hour % 12;

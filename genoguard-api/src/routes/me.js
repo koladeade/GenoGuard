@@ -9,8 +9,6 @@ router.use(requireAuth);
 
 router.get('/', (req, res) => res.json({ user: publicUser(req.user) }));
 
-// Editing has_scd re-derives the role (patient <-> explorer). Admins keep their role.
-// usage_logs_consent is the usage-log switch on the Privacy and data screen.
 router.patch('/', async (req, res) => {
   const r = z
     .object({
@@ -41,8 +39,6 @@ router.patch('/', async (req, res) => {
   res.json({ user: publicUser(rows[0]) });
 });
 
-// Hard delete. Password accounts re-confirm the password; Google-only accounts send { confirm: true }.
-// Cascades remove refresh tokens and reset codes.
 router.delete('/', async (req, res) => {
   const r = z
     .object({ password: z.string().max(72).optional(), confirm: z.boolean().optional() })

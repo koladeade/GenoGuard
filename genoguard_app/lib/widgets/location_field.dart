@@ -3,8 +3,6 @@ import '../core/ng_states.dart';
 import '../theme/app_theme.dart';
 import 'common.dart';
 
-/// "City or area" field that suggests Nigerian states as you type.
-/// Suggestions are optional: any text can still be typed.
 class LocationField extends StatefulWidget {
   const LocationField({
     super.key,

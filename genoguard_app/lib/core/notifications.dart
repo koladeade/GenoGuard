@@ -8,7 +8,7 @@ import '../patient/reminders_state.dart';
 import '../patient/reminder_utils.dart';
 
 /// Local (on-device) notifications. They fire at the reminder time even when the app is closed,
-/// and need no push server. Everything here is best-effort: a failure never breaks the app.
+/// and need no push server.
 class Notifier {
   Notifier._();
   static final Notifier instance = Notifier._();
@@ -121,7 +121,7 @@ class Notifier {
     }
   }
 
-  /// Cancels everything and schedules the current set again. Called after every change.
+  /// Cancels everything and schedules the current set again.
   Future<void> reschedule(List<Reminder> reminders) async {
     await init();
     if (!_ready) return;

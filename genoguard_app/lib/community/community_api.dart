@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-/// Why a post is being reported. Keys match the API; values are what people see.
+/// Why a post is being reported
 const kReportReasons = <String, String>{
   'harmful_advice': 'Harmful medical advice',
   'abuse': 'Abusive or hurtful',
@@ -80,7 +80,7 @@ class Comment {
   );
 }
 
-/// A comment waiting in the admin queue.
+/// comments waiting in the admin queue.
 class ReportedComment {
   ReportedComment({
     required this.commentId,
@@ -107,7 +107,7 @@ class ReportedComment {
   );
 }
 
-/// A post waiting in the admin queue.
+/// posts waiting in the admin queue.
 class ReportedPost {
   ReportedPost({
     required this.postId,
@@ -134,14 +134,12 @@ class ReportedPost {
   );
 }
 
-/// Thin wrapper over the /community endpoints. Errors are thrown as DioException; show them with errMsg().
 class CommunityApi {
   CommunityApi(this.dio);
   final Dio dio;
 
   static const pageSize = 20;
 
-  /// One page of the feed, newest first. Pass the oldest post you have as [before] to get the next page.
   Future<({List<Post> posts, bool hasMore})> posts({DateTime? before}) async {
     final r = await dio.get(
       '/community/posts',

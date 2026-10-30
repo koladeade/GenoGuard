@@ -25,7 +25,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   void initState() {
     super.initState();
-    // Arriving from "Continue with Google" on the login screen: prefill the name from Google.
+    // Arriving from "Continue with Google" on the login screen
     final g = context.read<AuthState>().pendingGoogle;
     if (g != null) _name.text = (g['name'] as String?) ?? '';
   }

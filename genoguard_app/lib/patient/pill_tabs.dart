@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Segmented control used for the filter chips and the sheet's Type / Repeat rows.
 class PillTabs extends StatelessWidget {
   const PillTabs({
     super.key,

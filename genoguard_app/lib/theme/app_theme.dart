@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Colors sampled from the Figma prototype screenshots. Adjust here and every screen follows.
+/// Colors samples
 class AppColors {
   static const bg = Color(0xFF11131E);
   static const surface = Color(0xFF1C2038);
@@ -24,7 +24,7 @@ class AppColors {
   static const navBar = Color(0xFF191C2E);
 }
 
-/// Serif for headings, Figtree for everything else. Swap the font calls if the design uses others.
+/// Serif for headings, Figtree for other texts
 class AppText {
   static TextStyle heading([double size = 30]) => GoogleFonts.sourceSerif4(
     fontSize: size,

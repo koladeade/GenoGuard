@@ -6,7 +6,6 @@ const { requireAuth, requireRole } = require('../auth');
 const { audit } = require('../audit');
 
 // Community. Patients and explorers read and write. Admins review reported posts and can delete any post.
-// Only a first name is ever shown, never an email, genotype or role.
 router.use(requireAuth);
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -14,8 +13,7 @@ const REASONS = ['harmful_advice', 'abuse', 'spam', 'privacy', 'other'];
 const members = requireRole('patient', 'explorer');
 const admins = requireRole('admin');
 
-// A post with this many open reports from different people is hidden from everyone but its author
-// until an admin keeps it (reports closed) or deletes it.
+// Post wth multiple reports get hidden
 const HIDE_AFTER = Number(process.env.REPORTS_TO_HIDE) || 3;
 
 const firstName = (n) => String(n || '').trim().split(/\s+/)[0] || 'Member';
@@ -50,7 +48,7 @@ const shapeComment = (r) => ({
   mine: !!r.mine,
 });
 
-// Posts with their author's first name. Comment counts and "did I report this" are added by decorate().
+
 const POST_SELECT = `
   SELECT p.id, p.body, p.created_at, p.author_id, u.full_name AS author
   FROM posts p JOIN users u ON u.id = p.author_id`;
@@ -166,7 +164,7 @@ router.get('/posts/:id', members, async (req, res) => {
   });
 });
 
-// Authors can delete their own post. Admins can delete any post (after review).
+// Authors can delete their own post. Admins can delete any post.
 router.delete('/posts/:id', async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'Post not found' });
   const isAdmin = req.user.role === 'admin';
@@ -199,7 +197,7 @@ router.post('/posts/:id/comments', members, commentLimiter, async (req, res) => 
   res.status(201).json({ comment: shapeComment({ ...rows[0], mine: true }) });
 });
 
-// Authors can delete their own comment. Admins can delete any comment (after review).
+// Authors can delete their own comment. Admins can delete any comment.
 router.delete('/comments/:id', async (req, res) => {
   if (!UUID.test(req.params.id)) return res.status(404).json({ error: 'Comment not found' });
   const isAdmin = req.user.role === 'admin';
@@ -221,7 +219,6 @@ router.post('/posts/:id/report', members, async (req, res) => {
   const post = await db.query(`SELECT author_id FROM posts WHERE id = $1`, [req.params.id]);
   if (!post.rows[0]) return res.status(404).json({ error: 'Post not found' });
   if (post.rows[0].author_id === req.user.id) return res.status(400).json({ error: 'You cannot report your own post' });
-  // Reporting twice is harmless: the second one is ignored.
   await db.query(
     `INSERT INTO post_reports (post_id, reporter_id, reason) VALUES ($1, $2, $3)
      ON CONFLICT (post_id, reporter_id) DO NOTHING`,
@@ -247,7 +244,6 @@ router.post('/comments/:id/report', members, async (req, res) => {
 
 // ---- Admin queue ----------------------------------------------------------------------------
 
-// Comments with open reports, oldest report first. Comments are not auto-hidden; admins decide.
 router.get('/reports/comments', admins, async (_req, res) => {
   const { rows } = await db.query(
     `SELECT c.id, c.body, c.created_at, c.post_id, u.full_name AS author,
@@ -285,7 +281,6 @@ router.post('/reports/comments/:id/dismiss', admins, async (req, res) => {
   res.json({ ok: true });
 });
 
-// Posts with open reports, oldest report first.
 router.get('/reports', admins, async (_req, res) => {
   const { rows } = await db.query(
     `SELECT p.id, p.body, p.created_at, u.full_name AS author,
@@ -312,7 +307,6 @@ router.get('/reports', admins, async (_req, res) => {
   });
 });
 
-// "Keep": the post stays and its open reports are closed.
 router.post('/reports/:postId/dismiss', admins, async (req, res) => {
   if (!UUID.test(req.params.postId)) return res.status(404).json({ error: 'Post not found' });
   const { rowCount } = await db.query(
@@ -323,6 +317,5 @@ router.post('/reports/:postId/dismiss', admins, async (req, res) => {
   await audit(req, 'post_kept', `post ${req.params.postId.slice(0, 8)}`);
   res.json({ ok: true });
 });
-// "Delete": DELETE /community/posts/:id (admins may delete any post; its comments and reports go with it).
 
 module.exports = router;

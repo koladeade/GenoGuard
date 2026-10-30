@@ -54,9 +54,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       final r = await context.read<AuthState>().api.dio.get('/usage');
       if (mounted)
         setState(() => _count = (r.data['count'] as num?)?.toInt() ?? 0);
-    } catch (_) {
-      // The count is a nice-to-have; the rest of the screen still works.
-    }
+    } catch (_) {}
   }
 
   Future<void> _toggle(bool on) async {

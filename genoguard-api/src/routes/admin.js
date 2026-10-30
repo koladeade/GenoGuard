@@ -5,8 +5,7 @@ const db = require('../db');
 const { requireAuth, requireRole } = require('../auth');
 const { audit, userLabel } = require('../audit');
 
-// Admin only. Admins see counts, account basics and aggregate research data. They never see
-// anyone's genotype, pain log, reminders or location.
+// Admin only. Admins see counts, account basics and aggregate research data. 
 router.use(requireAuth, requireRole('admin'));
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -70,7 +69,7 @@ router.get('/users', async (req, res) => {
   });
 });
 
-// Loads a target the admin may act on: not themselves, not another admin.
+
 async function target(req, res) {
   if (!UUID.test(req.params.id)) {
     res.status(404).json({ error: 'User not found' });
@@ -137,7 +136,7 @@ router.get('/research/summary', async (_req, res) => {
   });
 });
 
-// Participant ids are a keyed hash of the user id: stable across exports, not reversible without the secret.
+
 const pid = (userId) =>
   crypto.createHmac('sha256', process.env.JWT_SECRET || '').update(String(userId)).digest('hex').slice(0, 10);
 const csvCell = (v) => {

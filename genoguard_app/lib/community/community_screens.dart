@@ -55,7 +55,7 @@ Future<bool> confirmDialog(
   return ok ?? false;
 }
 
-/// Opens Community as its own page (used by the patient Profile menu).
+/// Opens Community
 void openCommunity(BuildContext context) {
   Navigator.of(context).push(
     MaterialPageRoute<void>(
@@ -76,7 +76,7 @@ void openCommunity(BuildContext context) {
   );
 }
 
-/// The guidelines notice shown above the feed and on the new-post screen.
+/// Guideline notice
 class GuidelinesNotice extends StatelessWidget {
   const GuidelinesNotice({super.key});
 
@@ -93,8 +93,7 @@ class GuidelinesNotice extends StatelessWidget {
   );
 }
 
-/// Bottom sheet to pick a reason. Returns true when the report was sent.
-/// Pass [comment] = true when [id] is a comment id.
+/// Bottom sheet to pick a reason why a comment is getting reported
 Future<bool> showReportSheet(
   BuildContext context,
   String id, {

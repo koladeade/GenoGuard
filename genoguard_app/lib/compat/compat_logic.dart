@@ -22,10 +22,9 @@ class CompatResult {
   final String parent2;
   final List<ChildOutcome> outcomes;
 
-  /// grid[row][col]: row = a gene from parent 1, column = a gene from parent 2.
   final List<List<String>> grid;
 
-  /// Chance (per pregnancy) of a child with sickle cell disease: SS or SC.
+  /// Chance of a child with sickle cell disease: SS or SC.
   int get scdPercent => outcomes
       .where((o) => o.genotype == 'SS' || o.genotype == 'SC')
       .fold(0, (s, o) => s + o.percent);

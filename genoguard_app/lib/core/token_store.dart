@@ -1,7 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Only the refresh token is persisted, in the iOS Keychain / Android Keystore-backed
-/// storage. The short-lived access token lives in memory and is re-issued on launch.
 class TokenStore {
   static const _storage = FlutterSecureStorage(
     iOptions: IOSOptions(

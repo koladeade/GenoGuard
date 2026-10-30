@@ -90,7 +90,7 @@ class Reminder {
     _ => 'As needed',
   };
 
-  /// Next time this fires, or null (as-needed, or a one-off already in the past).
+  /// Next time this fires, or null
   DateTime? next(DateTime now) {
     if (timeOfDay == null) return null;
     final t = parseHhmm(timeOfDay!);

@@ -1,8 +1,7 @@
 const jwt = require('jsonwebtoken');
 const db = require('./db');
 
-// Loads the user from the DB on every request, so role changes and deleted
-// accounts take effect immediately instead of waiting for the token to expire.
+
 async function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;

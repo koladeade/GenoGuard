@@ -6,7 +6,6 @@ import 'weather_service.dart';
 /// Shows a weather alert on the patient Home screen. Renders nothing when the
 /// weather is fine, the location is missing, or the lookup fails.
 /// The patient can close it with the X; it stays closed until the app restarts
-/// or the alert type / day changes.
 class WeatherCard extends StatefulWidget {
   const WeatherCard({super.key, required this.location});
   final String? location;
