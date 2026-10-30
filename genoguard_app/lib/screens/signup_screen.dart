@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../core/auth_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
-import '../widgets/location_field.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -41,7 +40,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   List<String> get _genoOptions =>
-      _hasScd == true ? ['SS', 'SC'] : ['AA', 'AS', 'AC'];
+      _hasScd == true ? ['SS', 'SC'] : ['AA', 'AS', 'AC', 'CC'];
 
   bool _valid(bool google) {
     if (_name.text.trim().isEmpty) return false;
@@ -130,7 +129,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 AppCard(
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle, color: AppColors.green),
+                      Icon(Icons.check_circle, color: AppColors.green),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -181,6 +180,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   label: 'Password',
                   controller: _pw,
                   password: true,
+                  showStrength: true,
                   helper: 'At least 8 characters',
                   autofillHints: const [AutofillHints.newPassword],
                   textInputAction: TextInputAction.next,
@@ -189,8 +189,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              LocationField(
+              AppTextField(
+                label: 'City or area',
                 controller: _loc,
+                hint: 'e.g. Lagos',
                 helper: 'Used only for weather tips. You can change it later.',
                 textInputAction: TextInputAction.done,
               ),
@@ -228,10 +230,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   value: _geno,
                   dropdownColor: AppColors.surface,
                   style: AppText.body(16),
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down,
-                    color: AppColors.muted,
-                  ),
+                  icon: Icon(Icons.keyboard_arrow_down, color: AppColors.muted),
                   decoration: const InputDecoration(hintText: 'Choose'),
                   items: [
                     for (final g in _genoOptions)

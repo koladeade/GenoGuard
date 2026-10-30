@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'password_strength.dart';
 
 /// Rounded gold square with an icon (logo / section badge).
 class IconBadge extends StatelessWidget {
@@ -64,7 +65,7 @@ class PrimaryButton extends StatelessWidget {
         textStyle: AppText.body(18, FontWeight.w700),
       ),
       child: busy
-          ? const SizedBox(
+          ? SizedBox(
               height: 22,
               width: 22,
               child: CircularProgressIndicator(
@@ -82,12 +83,12 @@ class SecondaryButton extends StatelessWidget {
     this.label, {
     super.key,
     required this.onPressed,
-    this.color = AppColors.gold,
+    this.color,
     this.leading,
   });
   final String label;
   final VoidCallback? onPressed;
-  final Color color;
+  final Color? color; // defaults to gold
   final Widget? leading;
 
   @override
@@ -98,8 +99,8 @@ class SecondaryButton extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         backgroundColor: AppColors.surface,
-        foregroundColor: color,
-        side: const BorderSide(color: AppColors.border, width: 1.2),
+        foregroundColor: color ?? AppColors.gold,
+        side: BorderSide(color: AppColors.border, width: 1.2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         textStyle: AppText.body(17, FontWeight.w700),
       ),
@@ -114,6 +115,7 @@ class SecondaryButton extends StatelessWidget {
   );
 }
 
+/// Google's four-colour "G" mark, drawn unmodified (do not recolour, stretch or crop it).
 const _googleGSvg = '''
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -151,7 +153,7 @@ class OrDivider extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 20),
     child: Row(
       children: [
-        const Expanded(child: Divider(color: AppColors.border, thickness: 1.2)),
+        Expanded(child: Divider(color: AppColors.border, thickness: 1.2)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
@@ -159,7 +161,7 @@ class OrDivider extends StatelessWidget {
             style: AppText.body(15, FontWeight.w600, AppColors.muted),
           ),
         ),
-        const Expanded(child: Divider(color: AppColors.border, thickness: 1.2)),
+        Expanded(child: Divider(color: AppColors.border, thickness: 1.2)),
       ],
     ),
   );
@@ -210,6 +212,7 @@ class AppTextField extends StatefulWidget {
     this.textInputAction,
     this.onSubmitted,
     this.maxLength,
+    this.showStrength = false,
   });
 
   final String label;
@@ -223,6 +226,7 @@ class AppTextField extends StatefulWidget {
   final TextInputAction? textInputAction;
   final void Function(String)? onSubmitted;
   final int? maxLength;
+  final bool showStrength;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -295,6 +299,8 @@ class _AppTextFieldState extends State<AppTextField> {
               style: AppText.body(15, FontWeight.w500, AppColors.muted),
             ),
           ),
+        if (widget.showStrength)
+          PasswordStrength(controller: widget.controller),
       ],
     );
   }
@@ -377,7 +383,7 @@ class AuthScaffold extends StatelessWidget {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.only(right: 12),
                 ),
-                icon: const Icon(Icons.chevron_left, color: AppColors.muted),
+                icon: Icon(Icons.chevron_left, color: AppColors.muted),
                 label: Text(
                   'Back',
                   style: AppText.body(17, FontWeight.w500, AppColors.muted),

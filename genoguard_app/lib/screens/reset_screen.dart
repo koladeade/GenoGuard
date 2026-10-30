@@ -87,6 +87,7 @@ class _ResetScreenState extends State<ResetScreen> {
             label: 'New password',
             controller: _pw,
             password: true,
+            showStrength: true,
             helper: 'At least 8 characters',
           ),
           ErrorText(_err),
