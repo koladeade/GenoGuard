@@ -1,4 +1,3 @@
-
 const nodemailer = require('nodemailer');
 
 const FROM_EMAIL = process.env.MAIL_FROM_EMAIL || '';
@@ -6,50 +5,80 @@ const FROM_NAME = process.env.MAIL_FROM_NAME || 'GenoGuard';
 
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-async function viaBrevo(to, subject, text, html) {
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'api-key': process.env.BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' },
-    body: JSON.stringify({
-      sender: { name: FROM_NAME, email: FROM_EMAIL },
-      to: [{ email: to }],
+
+class MailProvider {
+ 
+  async send(_to, _subject, _text, _html) {
+    throw new Error(`${this.constructor.name} must implement send()`);
+  }
+}
+
+class BrevoProvider extends MailProvider {
+  constructor(apiKey = process.env.BREVO_API_KEY, fromEmail = FROM_EMAIL, fromName = FROM_NAME) {
+    super();
+    this.apiKey = apiKey;
+    this.fromEmail = fromEmail;
+    this.fromName = fromName;
+  }
+
+  async send(to, subject, text, html) {
+    if (!this.fromEmail) throw new Error('MAIL_FROM_EMAIL is not set');
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': this.apiKey, 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({
+        sender: { name: this.fromName, email: this.fromEmail },
+        to: [{ email: to }],
+        subject,
+        textContent: text,
+        htmlContent: html,
+      }),
+    });
+    if (!res.ok) throw new Error(`Brevo ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    return true;
+  }
+}
+
+class SmtpProvider extends MailProvider {
+  async send(to, subject, text, html) {
+    const transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: Number(process.env.SMTP_PORT) === 465,
+      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+    });
+    await transport.sendMail({
+      from: process.env.MAIL_FROM || `"${FROM_NAME}" <${FROM_EMAIL}>`,
+      to,
       subject,
-      textContent: text,
-      htmlContent: html,
-    }),
-  });
-  if (!res.ok) throw new Error(`Brevo ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      text,
+      html,
+    });
+    return true;
+  }
 }
 
-async function viaSmtp(to, subject, text, html) {
-  const transport = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: Number(process.env.SMTP_PORT) === 465,
-    auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
-  });
-  await transport.sendMail({
-    from: process.env.MAIL_FROM || `"${FROM_NAME}" <${FROM_EMAIL}>`,
-    to,
-    subject,
-    text,
-    html,
-  });
+/** Development fallback: sends nothing, so the caller prints what the developer needs to see. */
+class ConsoleProvider extends MailProvider {
+  async send() {
+    return false;
+  }
 }
 
-// Returns false when nothing is configured (development): the caller prints what it needs to.
+
+function selectProvider(env = process.env) {
+  if (env.BREVO_API_KEY) return new BrevoProvider(env.BREVO_API_KEY);
+  if (env.SMTP_HOST) return new SmtpProvider();
+  return new ConsoleProvider();
+}
+
 async function deliver(to, subject, text, html) {
-  if (process.env.BREVO_API_KEY) {
-    if (!FROM_EMAIL) throw new Error('MAIL_FROM_EMAIL is not set');
-    await viaBrevo(to, subject, text, html);
-    return true;
-  }
-  if (process.env.SMTP_HOST) {
-    await viaSmtp(to, subject, text, html);
-    return true;
-  }
-  return false;
+  return selectProvider().send(to, subject, text, html);
 }
+
+// ---------------------------------------------------------------------------------------------
+// Messages
+// ---------------------------------------------------------------------------------------------
 
 // Welcome email sent after signup.
 async function sendWelcome(a, b) {
@@ -108,4 +137,14 @@ async function sendMatchInvite(to, inviterName, code, days) {
   if (!(await deliver(to, subject, text, html))) console.log(`\n[dev] Match invite for ${to} from ${inviterName}: code ${code}\n`);
 }
 
-module.exports = { sendResetCode, sendMatchInvite, sendWelcome };
+module.exports = {
+  sendResetCode,
+  sendMatchInvite,
+  sendWelcome,
+  // exported so the providers can be tested on their own
+  MailProvider,
+  BrevoProvider,
+  SmtpProvider,
+  ConsoleProvider,
+  selectProvider,
+};

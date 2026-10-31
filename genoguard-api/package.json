@@ -8,7 +8,7 @@
     "dev": "node --watch src/app.js",
     "migrate": "node src/migrate.js",
     "seed-admin": "node src/seed-admin.js",
-    "test": "node tests/community.test.js && node tests/community-paging-reports.test.js && node tests/invites.test.js && node tests/admin.test.js"
+    "test": "node tests/community.test.js && node tests/community-paging-reports.test.js && node tests/invites.test.js && node tests/admin.test.js && node tests/mail-providers.test.js"
   },
   "keywords": [],
   "author": "",
