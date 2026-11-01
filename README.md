@@ -235,7 +235,7 @@ Google sign-in also needs the iOS OAuth client ID and reversed client ID in `gen
 | **Device and usability testing** | manual | Release build on a physical iPhone, full flows including error inputs, against the local and deployed APIs |
 | **Performance** | `node tests/perf/latency.js <url> <email> <password>` (from `genoguard-api`, with an SS or SC patient account) | Median and p95 latency at 1, 10 and 25 concurrent requests. For the deployed API use `https://genoguard.onrender.com` and open `/health` first to wake the server |
 
-Results: local p95 at most 14 ms; deployed median 0.4 to 0.6 s with p95 up to 2.8 s, mostly network distance to the Oregon region. Full results and analysis are in the [technical report](<REPORT_LINK>) and shown in the video. See also `genoguard-api/tests/README.md`.
+Results: local p95 at most 14 ms; deployed median 0.4 to 0.6 s with p95 up to 2.8 s, mostly network distance to the Oregon region. Full results and analysis are in the [technical report](https://drive.google.com/file/d/1sJMhgMn3MOf82K0J5EtUAbFevtVp2CAH/view?usp=sharing) and shown in the video. See also `genoguard-api/tests/README.md`.
 
 ## Deployment (Render)
 
