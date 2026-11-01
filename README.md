@@ -8,7 +8,7 @@ Final-year Software Engineering capstone, African Leadership University.
 
 | Resource | Link |
 |---|---|
-| Walkthrough video | <VIDEO_LINK> |
+| Walkthrough video | [<VIDEO_LINK>](https://youtu.be/nSo2zz1FJ6o) |
 | Technical report (PDF, 5 pages max) | <REPORT_LINK> |
 | Source code | https://github.com/koladeade/GenoGuard |
 | Live API (Render, free tier) | https://genoguard.onrender.com (health check: `/health`) |
