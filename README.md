@@ -8,8 +8,8 @@ Final-year Software Engineering capstone, African Leadership University.
 
 | Resource | Link |
 |---|---|
-| Walkthrough video | [<VIDEO_LINK>](https://youtu.be/nSo2zz1FJ6o) |
-| Technical report (PDF, 5 pages max) | <REPORT_LINK> |
+| Walkthrough video | https://youtu.be/nSo2zz1FJ6o |
+| Technical report (PDF) | https://drive.google.com/file/d/1sJMhgMn3MOf82K0J5EtUAbFevtVp2CAH/view?usp=sharing |
 | Source code | https://github.com/koladeade/GenoGuard |
 | Live API (Render, free tier) | https://genoguard.onrender.com (health check: `/health`) |
 
@@ -57,7 +57,7 @@ flutter run --dart-define=API_URL=https://genoguard.onrender.com
 | PostgreSQL | 14 or later (Render runs PostgreSQL 18) |
 | Development machine | MacBook Air, macOS 26.3.1 |
 | Xcode | Xcode 26.6 |
-| Test devices | IPhone 16 plus (iOS 26.6.2), release build; iOS simulator |
+| Test devices | iPhone 16 Plus (iOS 26.6.2), release build; iOS simulator |
 | Android | Not built or tested (see [limitations](#limitations)) |
 
 **Main packages.** App: `dio`, `provider`, `go_router`, `google_sign_in`, `flutter_secure_storage`, `flutter_local_notifications`, `qr_flutter`, `mobile_scanner`, `flutter_svg`. API: `express` 5, `pg` (node-postgres, no ORM), `zod`, `bcryptjs`, `jsonwebtoken`, `helmet`, `express-rate-limit`. Tests: `pg-mem`, `flutter_test`.
@@ -95,6 +95,7 @@ GenoGuard/
 │       ├── community-paging-reports.test.js   29 checks: feed paging, comment reports
 │       ├── invites.test.js              44 checks: QR codes and email invites
 │       ├── admin.test.js                34 checks: roles, users, exports, audit log
+│       ├── mail-providers.test.js       18 checks: MailProvider classes and provider selection
 │       ├── support/
 │       │   ├── setup.js                 Swaps real db/auth/mail for test doubles
 │       │   ├── db.js                    In-memory PostgreSQL loaded with schema.sql
@@ -229,12 +230,12 @@ Google sign-in also needs the iOS OAuth client ID and reversed client ID in `gen
 
 | Strategy | Command | Coverage |
 |---|---|---|
-| **Integration tests** (API) | `cd genoguard-api && npm install && npm test` | 145 checks: community, QR and invites, admin. Real route files run against an in-memory PostgreSQL loaded with the real schema; auth, database and mail are test doubles. Covers valid, blank, over-long, wrong-role, unauthenticated, expired and repeated inputs |
+| **Integration tests** (API) | `cd genoguard-api && npm install && npm test` | 163 checks in 5 suites: community, community paging and reports, QR and invites, admin, and the mail providers. Real route files run against an in-memory PostgreSQL loaded with the real schema; auth, database and mail are test doubles. Covers valid, blank, over-long, wrong-role, unauthenticated, expired and repeated inputs |
 | **Unit tests** (Flutter) | `cd genoguard_app && flutter test` | 24 tests: Punnett-square outcomes and risk levels for eight pairings and for all 25 pairs (totals 100%, parent order irrelevant); reminder next-fire time for daily, every-2-hours, one-off and as-needed |
-| **Device and usability testing** | manual | Release build on a physical iPhone, full flows including error inputs |
-| **Performance** | `node tests/perf/latency.js <url> <email> <password>` (from `genoguard-api`, with a non-admin account) | Median and p95 latency at 1, 10 and 25 concurrent requests |
+| **Device and usability testing** | manual | Release build on a physical iPhone, full flows including error inputs, against the local and deployed APIs |
+| **Performance** | `node tests/perf/latency.js <url> <email> <password>` (from `genoguard-api`, with an SS or SC patient account) | Median and p95 latency at 1, 10 and 25 concurrent requests. For the deployed API use `https://genoguard.onrender.com` and open `/health` first to wake the server |
 
-Results and analysis are in the [technical report](<REPORT_LINK>) and shown in the video. See also `genoguard-api/tests/README.md`.
+Results: local p95 at most 14 ms; deployed median 0.4 to 0.6 s with p95 up to 2.8 s, mostly network distance to the Oregon region. Full results and analysis are in the [technical report](<REPORT_LINK>) and shown in the video. See also `genoguard-api/tests/README.md`.
 
 ## Deployment (Render)
 
@@ -256,7 +257,7 @@ Results and analysis are in the [technical report](<REPORT_LINK>) and shown in t
 | Problem | Fix |
 |---|---|
 | "Cannot reach server" on the phone | Open `<API_URL>/health` in the phone's browser to wake the server, then retry. Check that the build used `--dart-define=API_URL=...` (the default is `localhost`) |
-| `npm test` cannot find the schema | The test harness loads every `schema.sql` file in `genoguard-api`; run it from `genoguard-api` |
+| `npm test` cannot find the schema | The test harness loads every `schema*.sql` file in `genoguard-api`; run it from `genoguard-api` |
 | Reset or invite emails do not arrive | Without Brevo / SMTP settings they are printed in the API console. Invites to new users may land in spam until a sending domain is verified |
 | iPhone install fails | Unlock the phone, trust the developer profile, and use a release build. Free signing lasts 7 days |
 
@@ -264,6 +265,7 @@ Results and analysis are in the [technical report](<REPORT_LINK>) and shown in t
 
 - Built and tested on **iOS only**. An installable iOS build cannot be distributed without a paid Apple Developer account, so no APK or IPA is included; run from source, or use the video.
 - Android and low-end devices are untested; no frame-rate profiling was done.
-- A history screen for appointments is not built; one-off appointments are removed once they pass.
+- An appointments history screen is planned for the next phase; pain history and the recovery graph are available.
 - Light mode is not implemented.
 - The free Render API sleeps when idle and the free database expires after 30 days.
+- The crisis article and weather thresholds need clinician review, and the consent wording must match the final ethics form.
