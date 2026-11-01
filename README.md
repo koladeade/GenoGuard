@@ -256,7 +256,7 @@ Results and analysis are in the [technical report](<REPORT_LINK>) and shown in t
 | Problem | Fix |
 |---|---|
 | "Cannot reach server" on the phone | Open `<API_URL>/health` in the phone's browser to wake the server, then retry. Check that the build used `--dart-define=API_URL=...` (the default is `localhost`) |
-| `npm test` cannot find the schema | The test harness loads every `schema*.sql` file in `genoguard-api`; run it from `genoguard-api` |
+| `npm test` cannot find the schema | The test harness loads every `schema.sql` file in `genoguard-api`; run it from `genoguard-api` |
 | Reset or invite emails do not arrive | Without Brevo / SMTP settings they are printed in the API console. Invites to new users may land in spam until a sending domain is verified |
 | iPhone install fails | Unlock the phone, trust the developer profile, and use a release build. Free signing lasts 7 days |
 
@@ -264,7 +264,6 @@ Results and analysis are in the [technical report](<REPORT_LINK>) and shown in t
 
 - Built and tested on **iOS only**. An installable iOS build cannot be distributed without a paid Apple Developer account, so no APK or IPA is included; run from source, or use the video.
 - Android and low-end devices are untested; no frame-rate profiling was done.
-- A history screen for reminders and appointments is not built; one-off appointments are removed once they pass.
+- A history screen for appointments is not built; one-off appointments are removed once they pass.
 - Light mode is not implemented.
 - The free Render API sleeps when idle and the free database expires after 30 days.
-- The crisis article and weather thresholds need clinician review, and the consent wording must match the final ethics form.
