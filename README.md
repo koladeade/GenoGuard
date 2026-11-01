@@ -257,7 +257,7 @@ Results: local p95 at most 14 ms; deployed median 0.4 to 0.6 s with p95 up to 2.
 | Problem | Fix |
 |---|---|
 | "Cannot reach server" on the phone | Open `<API_URL>/health` in the phone's browser to wake the server, then retry. Check that the build used `--dart-define=API_URL=...` (the default is `localhost`) |
-| `npm test` cannot find the schema | The test harness loads every `schema*.sql` file in `genoguard-api`; run it from `genoguard-api` |
+| `npm test` cannot find the schema | The test harness loads every `schema.sql` file in `genoguard-api`; run it from `genoguard-api` |
 | Reset or invite emails do not arrive | Without Brevo / SMTP settings they are printed in the API console. Invites to new users may land in spam until a sending domain is verified |
 | iPhone install fails | Unlock the phone, trust the developer profile, and use a release build. Free signing lasts 7 days |
 
